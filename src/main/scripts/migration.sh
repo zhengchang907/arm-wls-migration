@@ -238,9 +238,9 @@ EOF
 }
 
 function setupOracleBinary() {
-    java -jar ${BASE_DIR}/${TARGET_BINARY_FILE_NAME} \
+    java -jar '${BASE_DIR}/${TARGET_BINARY_FILE_NAME}' \
             -targetOracleHomeLoc ${ORACLE_HOME} \
-            -invPtrLoc ${BASE_DIR}/oraInst.loc \
+            -invPtrLoc '${BASE_DIR}/oraInst.loc' \
             -javaHome ${JAVA_HOME}
 }
 
