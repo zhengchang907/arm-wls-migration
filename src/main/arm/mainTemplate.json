@@ -97,18 +97,18 @@
                 "description": "JDK Home, must match the source environment"
             }
         },
-        // "oracleHome": {
-        //     "type": "string",
-        //     "metadata": {
-        //         "description": "Oracle Home, must match the source environment"
-        //     }
-        // },
-        // "domainHome": {
-        //     "type": "string",
-        //     "metadata": {
-        //         "description": "Domain Home, must match the source environment"
-        //     }
-        // },
+        "oracleHome": {
+            "type": "string",
+            "metadata": {
+                "description": "Oracle Home, must match the source environment"
+            }
+        },
+        "domainHome": {
+            "type": "string",
+            "metadata": {
+                "description": "Domain Home, must match the source environment"
+            }
+        },
         "linuxOSVersion": {
             "type": "string",
             "defaultValue": "7.6",
@@ -355,7 +355,7 @@
                     "fileUris": [
                         "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('migrationScript'), parameters('_artifactsLocationSasToken')))]"
                     ],
-                    "commandToExecute": "[concat('sh',' ',variables('migrationScript'),' ',parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('jdkVersion'),' ',parameters('javaHome'),' ',parameters('migrationSaName'),' ',parameters('migrationConName'),' ',parameters('migrationSASToken'),' ',parameters('ofmBinaryFileName'),' ',parameters('domainZipFileName'))]"
+                    "commandToExecute": "[concat('sh',' ',variables('migrationScript'),' ',parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('jdkVersion'),' ',parameters('javaHome'),' ',parameters('migrationSaName'),' ',parameters('migrationConName'),' ',parameters('migrationSASToken'),' ',parameters('ofmBinaryFileName'),' ',parameters('domainZipFileName'),' ',parameters('oracleHome'),' ',parameters('domainHome'))]"
                 }
             }
         },
