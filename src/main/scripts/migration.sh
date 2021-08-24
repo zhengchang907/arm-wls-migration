@@ -7,12 +7,13 @@ export otnusername="${2}"
 export otnpassword="${3}"
 export jdkVersion="${4}"
 export JAVA_HOME="${5}"
-export JDK_HOME=$(dirname "${JAVA_HOME}")
 export AZ_ACCOUNT_NAME="${6}"
 export AZ_BLOB_CONTAINER="${7}"
 export AZ_SAS_TOKEN="${8}"
 export TARGET_BINARY_FILE_NAME="${9}"
 export TARGET_DOMAIN_FILE_NAME="${10}"
+export ORACLE_HOME="${11}"
+export DOMAIN_HOME="${12}"
 
 function validateInputs() {
     if [ -z "$acceptOTNLicenseAgreement" ]; then
@@ -64,6 +65,16 @@ function validateInputs() {
         echo_stderr "TARGET_DOMAIN_FILE_NAME needs to be specified"
         exit 1
     fi
+
+    if [ -z "$ORACLE_HOME" ]; then
+        echo_stderr "ORACLE_HOME needs to be specified"
+        exit 1
+    fi
+
+    if [ -z "$DOMAIN_HOME" ]; then
+        echo_stderr "DOMAIN_HOME needs to be specified"
+        exit 1
+    fi
 }
 
 function addOracleGroupAndUser() {
@@ -78,11 +89,17 @@ function addOracleGroupAndUser() {
 }
 
 function setupInstallPath() {
+    export JDK_HOME=$(dirname "${JAVA_HOME}")
+    export ORACLE_INSTALL_PATH=$(dirname $(dirname $(dirname ${ORACLE_HOME})))
 
     #create custom directory for setting up wls and jdk
     sudo mkdir -p $JDK_HOME
+    sudo chown -R $username:$groupname $JDK_PATH
+    sudo mkdir -p $ORACLE_INSTALL_PATH
+    sudo chown -R $username:$groupname $INSTALL_PATH
 
     sudo rm -rf $JDK_HOME/*
+    sudo rm -rf $ORACLE_INSTALL_PATH/*
 }
 
 #Function to cleanup all temporary files
@@ -92,6 +109,15 @@ function cleanup() {
     rm -f $BASE_DIR/jdk-11.0.9_linux-x64_bin.tar.gz
 
     rm -rf $JDK_HOME/jdk-11.0.9_linux-x64_bin.tar.gz
+
+    
+    rm -f ${BASE_DIR}/azcopy.tar.gz
+
+    rm -rf ${BASE_DIR}/azcopy
+
+    rm -f ${BASE_DIR}/${TARGET_BINARY_FILE_NAME}
+    rm -f ${BASE_DIR}/${TARGET_DOMAIN_FILE_NAME}
+
     echo "Cleanup completed."
 }
 
@@ -198,6 +224,26 @@ function downloadMigrationData() {
     $AZ_COPY_PATH/azcopy cp "${AZ_DOMAIN_BLOB_SAS}" "${BASE_DIR}/${TARGET_DOMAIN_FILE_NAME}"
 }
 
+function create_oraInstloc()
+{
+    echo "creating Install Location Template..."
+
+    cat <<EOF >$BASE_DIR/oraInst.loc.template
+inventory_loc=[INSTALL_PATH]
+inst_group=[GROUP]
+EOF
+
+    sed 's@\[INSTALL_PATH\]@'"$ORACLE_INSTALL_PATH"'@' ${BASE_DIR}/oraInst.loc.template > ${BASE_DIR}/oraInst.loc
+    sed -i 's@\[GROUP\]@'"$USER_GROUP"'@' ${BASE_DIR}/oraInst.loc
+}
+
+function setupOracleBinary() {
+    java -jar ${BASE_DIR}/${TARGET_BINARY_FILE_NAME} \
+            -targetOracleHomeLoc ${ORACLE_HOME} \
+            -invPtrLoc ${BASE_DIR}/oraInst.loc \
+            -javaHome ${JAVA_HOME}
+}
+
 validateInputs
 
 addOracleGroupAndUser
@@ -213,5 +259,9 @@ downloadJDK
 setupJDK
 
 downloadMigrationData
+
+create_oraInstloc
+
+setupOracleBinary
 
 echo "Weblogic Server Installation Completed succesfully."
