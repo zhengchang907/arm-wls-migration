@@ -56,25 +56,25 @@ function validateInputs() {
         exit 1
     fi
 
-    if [ -z "$TARGET_BINARY_FILE_NAME" ]; then
-        echo_stderr "TARGET_BINARY_FILE_NAME needs to be specified"
-        exit 1
-    fi
+    # if [ -z "$TARGET_BINARY_FILE_NAME" ]; then
+    #     echo_stderr "TARGET_BINARY_FILE_NAME needs to be specified"
+    #     exit 1
+    # fi
 
-    if [ -z "$TARGET_DOMAIN_FILE_NAME" ]; then
-        echo_stderr "TARGET_DOMAIN_FILE_NAME needs to be specified"
-        exit 1
-    fi
+    # if [ -z "$TARGET_DOMAIN_FILE_NAME" ]; then
+    #     echo_stderr "TARGET_DOMAIN_FILE_NAME needs to be specified"
+    #     exit 1
+    # fi
 
-    if [ -z "$ORACLE_HOME" ]; then
-        echo_stderr "ORACLE_HOME needs to be specified"
-        exit 1
-    fi
+    # if [ -z "$ORACLE_HOME" ]; then
+    #     echo_stderr "ORACLE_HOME needs to be specified"
+    #     exit 1
+    # fi
 
-    if [ -z "$DOMAIN_HOME" ]; then
-        echo_stderr "DOMAIN_HOME needs to be specified"
-        exit 1
-    fi
+    # if [ -z "$DOMAIN_HOME" ]; then
+    #     echo_stderr "DOMAIN_HOME needs to be specified"
+    #     exit 1
+    # fi
 }
 
 function addOracleGroupAndUser() {
@@ -94,9 +94,9 @@ function setupInstallPath() {
 
     #create custom directory for setting up wls and jdk
     sudo mkdir -p $JDK_HOME
-    sudo chown -R $username:$groupname $JDK_PATH
+    sudo chown -R $username:$groupname $JDK_HOME
     sudo mkdir -p $ORACLE_INSTALL_PATH
-    sudo chown -R $username:$groupname $INSTALL_PATH
+    sudo chown -R $username:$groupname $ORACLE_INSTALL_PATH
 
     sudo rm -rf $JDK_HOME/*
     sudo rm -rf $ORACLE_INSTALL_PATH/*
@@ -238,7 +238,7 @@ EOF
 }
 
 function setupOracleBinary() {
-    java -jar '${BASE_DIR}/${TARGET_BINARY_FILE_NAME}' -targetOracleHomeLoc ${ORACLE_HOME} -invPtrLoc '${BASE_DIR}/oraInst.loc' -javaHome ${JAVA_HOME}
+    runuser -l oracle -c "$JAVA_HOME/bin/java -jar ${TARGET_BINARY_FILE_NAME} -targetOracleHomeLoc ${ORACLE_HOME} -invPtrLoc ${BASE_DIR}/oraInst.loc -javaHome ${JAVA_HOME}"
 }
 
 validateInputs
