@@ -189,6 +189,7 @@ function downloadJDK() {
 }
 
 function setupJDK() {
+    echo "Setup JDK start"
     sudo cp $BASE_DIR/jdk-11.0.9_linux-x64_bin.tar.gz $JDK_HOME/jdk-11.0.9_linux-x64_bin.tar.gz
 
     echo "extracting and setting up jdk..."
@@ -205,9 +206,11 @@ function setupJDK() {
         echo_stderr "Failed to set JAVA_HOME. Please check logs and re-run the setup"
         exit 1
     fi
+    echo "Setup JDK start"
 }
 
 function downloadMigrationData() {
+    echo "Download migration data start"
     AZ_ACCOUNT_URI="https://$AZ_ACCOUNT_NAME.blob.core.windows.net"
 
     AZ_BLOB_TARGET="${AZ_ACCOUNT_URI}/${AZ_BLOB_CONTAINER}"
@@ -222,6 +225,7 @@ function downloadMigrationData() {
 
     $AZ_COPY_PATH/azcopy cp "${AZ_BINARY_BLOB_SAS}" "${BASE_DIR}/${TARGET_BINARY_FILE_NAME}"
     $AZ_COPY_PATH/azcopy cp "${AZ_DOMAIN_BLOB_SAS}" "${BASE_DIR}/${TARGET_DOMAIN_FILE_NAME}"
+    echo "Download migration data end"
 }
 
 function create_oraInstloc()
