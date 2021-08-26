@@ -10,8 +10,8 @@ export JAVA_HOME="${5}"
 export AZ_ACCOUNT_NAME="${6}"
 export AZ_BLOB_CONTAINER="${7}"
 export AZ_SAS_TOKEN="${8}"
-export TARGET_BINARY_FILE_NAME="${9}"
-export TARGET_DOMAIN_FILE_NAME="${10}"
+export TARGET_BINARY_FILE_NAME="${9}".jar
+export TARGET_DOMAIN_FILE_NAME="${10}".zip
 export ORACLE_HOME="${11}"
 export DOMAIN_HOME="${12}"
 
@@ -247,7 +247,7 @@ EOF
 }
 
 function setupOracleBinary() {
-    java -jar ${TARGET_BINARY_FILE_NAME} -targetOracleHomeLoc ${ORACLE_HOME} -invPtrLoc ${BASE_DIR}/oraInst.loc -javaHome ${JAVA_HOME}
+    runuser -l oracle -c 'java -jar ${TARGET_BINARY_FILE_NAME} -targetOracleHomeLoc ${ORACLE_HOME} -invPtrLoc ${BASE_DIR}/oraInst.loc -javaHome ${JAVA_HOME}'
 }
 
 validateInputs
