@@ -228,8 +228,8 @@ function downloadMigrationData() {
     echo "${BASE_DIR}/$TARGET_DOMAIN_FILE_NAME"
     echo "${BASE_DIR}/$TARGET_BINARY_FILE_NAME"
 
-    $AZ_COPY_PATH/azcopy cp "${AZ_DOMAIN_BLOB_SAS}" "${BASE_DIR}/${TARGET_DOMAIN_FILE_NAME}"
-    $AZ_COPY_PATH/azcopy cp "${AZ_BINARY_BLOB_SAS}" "${BASE_DIR}/${TARGET_BINARY_FILE_NAME}"
+    $AZ_COPY_PATH/azcopy cp '${AZ_DOMAIN_BLOB_SAS}' '${BASE_DIR}/${TARGET_DOMAIN_FILE_NAME}'
+    $AZ_COPY_PATH/azcopy cp '${AZ_BINARY_BLOB_SAS}' '${BASE_DIR}/${TARGET_BINARY_FILE_NAME}'
     echo "Download migration data end"
 }
 
