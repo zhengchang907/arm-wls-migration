@@ -17,12 +17,12 @@ export DOMAIN_HOME="${12}"
 
 function validateInputs() {
     if [ -z "$acceptOTNLicenseAgreement" ]; then
-        echo _stderr "acceptOTNLicenseAgreement is required. Value should be either Y/y or N/n"
+        echo_stderr "acceptOTNLicenseAgreement is required. Value should be either Y/y or N/n"
         exit 1
     fi
 
     if [[ ! ${acceptOTNLicenseAgreement} =~ ^[Yy]$ ]]; then
-        echo "acceptOTNLicenseAgreement value not specified as Y/y (yes). Exiting installation Weblogic Server process."
+        echo_stderr "acceptOTNLicenseAgreement value not specified as Y/y (yes). Exiting installation Weblogic Server process."
         exit 1
     fi
 
