@@ -247,7 +247,7 @@ EOF
 }
 
 function setupOracleBinary() {
-    runuser -l oracle -c 'java -jar ${TARGET_BINARY_FILE_NAME} -targetOracleHomeLoc ${ORACLE_HOME} -invPtrLoc ${BASE_DIR}/oraInst.loc -javaHome ${JAVA_HOME}'
+    runuser -l oracle -c '${JAVA_HOME}/bin/java -jar ${TARGET_BINARY_FILE_NAME} -targetOracleHomeLoc ${ORACLE_HOME} -invPtrLoc ${BASE_DIR}/oraInst.loc -javaHome ${JAVA_HOME}'
 }
 
 validateInputs
