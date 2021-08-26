@@ -355,7 +355,7 @@
                     "fileUris": [
                         "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('migrationScript'), parameters('_artifactsLocationSasToken')))]"
                     ],
-                    "commandToExecute": "[concat('sh',' ',variables('migrationScript'),' ',parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('jdkVersion'),' ',parameters('javaHome'),' ',parameters('migrationSaName'),' ',parameters('migrationConName'),' ',parameters('migrationSASToken'),' ',parameters('ofmBinaryFileName'),' ',parameters('domainZipFileName'),' ',parameters('oracleHome'),' ',parameters('domainHome'))]"
+                    "commandToExecute": "[concat('sh',' ',variables('migrationScript'),' ',parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('jdkVersion'),' ',parameters('javaHome'),' ',parameters('ofmBinaryFileName'),' ',parameters('domainZipFileName'),' ',parameters('oracleHome'),' ',parameters('domainHome'),' ',parameters('migrationSaName'),' ',parameters('migrationConName'),' ',parameters('migrationSASToken'))]"
                 }
             }
         },
