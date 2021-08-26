@@ -115,8 +115,8 @@ function cleanup() {
 
     rm -rf ${BASE_DIR}/azcopy
 
-    rm -f ${BASE_DIR}/${TARGET_BINARY_FILE_NAME}
-    rm -f ${BASE_DIR}/${TARGET_DOMAIN_FILE_NAME}
+    # rm -f ${BASE_DIR}/${TARGET_BINARY_FILE_NAME}
+    # rm -f ${BASE_DIR}/${TARGET_DOMAIN_FILE_NAME}
 
     echo "Cleanup completed."
 }
