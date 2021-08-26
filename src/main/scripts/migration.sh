@@ -250,7 +250,7 @@ function setupOracleBinary() {
     sudo chown $username:$groupname $TARGET_BINARY_FILE_NAME
     cmd="${JAVA_HOME}/bin/java -jar ${BASE_DIR}/${TARGET_BINARY_FILE_NAME} -targetOracleHomeLoc ${ORACLE_HOME} -invPtrLoc ${BASE_DIR}/oraInst.loc -javaHome ${JAVA_HOME}"
     echo "cmd to run: $cmd"
-    sudo runuser -l oracle -c '$cmd'
+    sudo runuser -l oracle -c "${cmd}"
 }
 
 validateInputs
