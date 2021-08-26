@@ -15,6 +15,8 @@ export TARGET_DOMAIN_FILE_NAME="${10}"
 export ORACLE_HOME="${11}"
 export DOMAIN_HOME="${12}"
 
+echo $BASE_DIR $acceptOTNLicenseAgreement $otnusername $otnpassword $jdkVersion $JAVA_HOME $AZ_ACCOUNT_NAME $AZ_BLOB_CONTAINER $AZ_SAS_TOKEN $TARGET_BINARY_FILE_NAME $TARGET_DOMAIN_FILE_NAME $ORACLE_HOME $DOMAIN_HOME
+
 function validateInputs() {
     if [ -z "$acceptOTNLicenseAgreement" ]; then
         echo_stderr "acceptOTNLicenseAgreement is required. Value should be either Y/y or N/n"
