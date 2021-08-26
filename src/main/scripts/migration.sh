@@ -56,25 +56,25 @@ function validateInputs() {
         exit 1
     fi
 
-    # if [ -z "$TARGET_BINARY_FILE_NAME" ]; then
-    #     echo_stderr "TARGET_BINARY_FILE_NAME needs to be specified"
-    #     exit 1
-    # fi
+    if [ -z "$TARGET_DOMAIN_FILE_NAME" ]; then
+        echo_stderr "TARGET_DOMAIN_FILE_NAME needs to be specified"
+        exit 1
+    fi
 
-    # if [ -z "$TARGET_DOMAIN_FILE_NAME" ]; then
-    #     echo_stderr "TARGET_DOMAIN_FILE_NAME needs to be specified"
-    #     exit 1
-    # fi
+    if [ -z "$TARGET_BINARY_FILE_NAME" ]; then
+        echo_stderr "TARGET_BINARY_FILE_NAME needs to be specified"
+        exit 1
+    fi
 
-    # if [ -z "$ORACLE_HOME" ]; then
-    #     echo_stderr "ORACLE_HOME needs to be specified"
-    #     exit 1
-    # fi
+    if [ -z "$ORACLE_HOME" ]; then
+        echo_stderr "ORACLE_HOME needs to be specified"
+        exit 1
+    fi
 
-    # if [ -z "$DOMAIN_HOME" ]; then
-    #     echo_stderr "DOMAIN_HOME needs to be specified"
-    #     exit 1
-    # fi
+    if [ -z "$DOMAIN_HOME" ]; then
+        echo_stderr "DOMAIN_HOME needs to be specified"
+        exit 1
+    fi
 }
 
 function addOracleGroupAndUser() {
@@ -115,8 +115,8 @@ function cleanup() {
 
     rm -rf ${BASE_DIR}/azcopy
 
-    # rm -f ${BASE_DIR}/${TARGET_BINARY_FILE_NAME}
-    # rm -f ${BASE_DIR}/${TARGET_DOMAIN_FILE_NAME}
+    rm -f ${BASE_DIR}/${TARGET_DOMAIN_FILE_NAME}
+    rm -f ${BASE_DIR}/${TARGET_BINARY_FILE_NAME}
 
     echo "Cleanup completed."
 }
@@ -215,16 +215,16 @@ function downloadMigrationData() {
 
     AZ_BLOB_TARGET="${AZ_ACCOUNT_URI}/${AZ_BLOB_CONTAINER}"
 
-    AZ_BINARY_BLOB_SAS="${AZ_BLOB_TARGET}/${TARGET_BINARY_FILE_NAME}?${AZ_SAS_TOKEN}"
     AZ_DOMAIN_BLOB_SAS="${AZ_BLOB_TARGET}/${TARGET_DOMAIN_FILE_NAME}?${AZ_SAS_TOKEN}"
+    AZ_BINARY_BLOB_SAS="${AZ_BLOB_TARGET}/${TARGET_BINARY_FILE_NAME}?${AZ_SAS_TOKEN}"
 
     echo "${AZ_BINARY_BLOB_SAS}"
     echo "${AZ_DOMAIN_BLOB_SAS}"
-    echo "${BASE_DIR}/${TARGET_BINARY_FILE_NAME}"
     echo "${BASE_DIR}/$TARGET_DOMAIN_FILE_NAME"
+    echo "${BASE_DIR}/$TARGET_BINARY_FILE_NAME"
 
-    $AZ_COPY_PATH/azcopy cp "${AZ_BINARY_BLOB_SAS}" "${BASE_DIR}/${TARGET_BINARY_FILE_NAME}"
     $AZ_COPY_PATH/azcopy cp "${AZ_DOMAIN_BLOB_SAS}" "${BASE_DIR}/${TARGET_DOMAIN_FILE_NAME}"
+    $AZ_COPY_PATH/azcopy cp "${AZ_BINARY_BLOB_SAS}" "${BASE_DIR}/${TARGET_BINARY_FILE_NAME}"
     echo "Download migration data end"
 }
 
@@ -264,13 +264,13 @@ downloadJDK
 echo "step 5"
 setupJDK
 
-# echo "step 6"
-# downloadMigrationData
+echo "step 6"
+downloadMigrationData
 
-# echo "step 7"
-# create_oraInstloc
+echo "step 7"
+create_oraInstloc
 
-# echo "step 8"
-# setupOracleBinary
+echo "step 8"
+setupOracleBinary
 
 echo "Weblogic Server Installation Completed succesfully."
