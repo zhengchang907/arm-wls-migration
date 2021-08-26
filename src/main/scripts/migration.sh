@@ -115,8 +115,8 @@ function cleanup() {
 
     rm -rf ${BASE_DIR}/azcopy
 
-    rm -f ${BASE_DIR}/${TARGET_BINARY_FILE_NAME}
-    rm -f ${BASE_DIR}/${TARGET_DOMAIN_FILE_NAME}
+    # rm -f ${BASE_DIR}/${TARGET_BINARY_FILE_NAME}
+    # rm -f ${BASE_DIR}/${TARGET_DOMAIN_FILE_NAME}
 
     echo "Cleanup completed."
 }
@@ -249,20 +249,28 @@ validateInputs
 
 addOracleGroupAndUser
 
+echo "step 1"
 setupInstallPath
 
+echo "step 2"
 cleanup
 
+echo "step 3"
 installUtilities
 
+echo "step 4"
 downloadJDK
 
+echo "step 5"
 setupJDK
 
+echo "step 6"
 downloadMigrationData
 
+echo "step 7"
 create_oraInstloc
 
-# setupOracleBinary
+echo "step 8"
+setupOracleBinary
 
 echo "Weblogic Server Installation Completed succesfully."
