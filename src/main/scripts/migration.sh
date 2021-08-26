@@ -264,13 +264,13 @@ downloadJDK
 echo "step 5"
 setupJDK
 
-echo "step 6"
-downloadMigrationData
+# echo "step 6"
+# downloadMigrationData
 
-echo "step 7"
-create_oraInstloc
+# echo "step 7"
+# create_oraInstloc
 
-echo "step 8"
-setupOracleBinary
+# echo "step 8"
+# setupOracleBinary
 
 echo "Weblogic Server Installation Completed succesfully."
