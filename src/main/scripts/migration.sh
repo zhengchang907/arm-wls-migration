@@ -13,6 +13,10 @@ export AZ_ACCOUNT_NAME="${10}"
 export AZ_BLOB_CONTAINER="${11}"
 export AZ_SAS_TOKEN="${12}"
 export TMP_FILE_DIR="/u01/tmp"
+export DOMAIN_ADMIN_USERNAME="${13}"
+export DOMAIN_ADMIN_PASSWORD="${14}"
+export SOURCE_HOST_NAME="${15}"
+export TARGET_HOST_NAME="${16}"
 
 function echo_stderr ()
 {
@@ -248,11 +252,43 @@ EOF
     sed -i 's@\[GROUP\]@'"$USER_GROUP"'@' ${TMP_FILE_DIR}/oraInst.loc
 }
 
-function setupOracleBinary() {
-    sudo chmod 777 $TARGET_BINARY_FILE_NAME
+function setupOracleBinaryAndDomain() 
+{
     cmd="${JAVA_HOME}/bin/java -jar ${TMP_FILE_DIR}/${TARGET_BINARY_FILE_NAME} -targetOracleHomeLoc ${ORACLE_HOME} -invPtrLoc ${TMP_FILE_DIR}/oraInst.loc -javaHome ${JAVA_HOME}"
     echo "cmd to run: $cmd"
     sudo runuser -l oracle -c "${cmd}"
+    sudo unzip ${TMP_FILE_DIR}/${TARGET_DOMAIN_FILE_NAME} -d $(dirname "${DOMAIN_HOME}")
+}
+
+function createInputFile() 
+{
+    echo "creating Install Location Template..."
+
+    cat <<EOF >$TMP_FILE_DIR/inpute_file.template
+[ARGUMENTS]
+
+[SERVER_HOST_MAPPING]
+#pattern source_host_name=target_host_name
+[source_host_name]=[target_host_name]
+EOF
+
+    sed 's@\[source_host_name\]@'"$SOURCE_HOST_NAME"'@' ${TMP_FILE_DIR}/inpute_file.template > ${TMP_FILE_DIR}/inpute_file
+    sed -i 's@\[target_host_name\]@'"$TARGET_HOST_NAME"'@' ${TMP_FILE_DIR}/inpute_file
+}
+
+function crateWalletDirectory()
+{
+    echo ${DOMAIN_ADMIN_PASSWORD} | sudo ${ORACLE_HOME}/oracle_common/common/bin/configWallet.sh -walletDir ${TMP_FILE_DIR} ${DOMAIN_ADMIN_USERNAME}
+}
+
+function runChangeHostCmd(()
+{
+    .${ORACLE_HOME}/oracle_common/common/bin/c/chghost.sh -chgHostInputFile ${TMP_FILE_DIR}/inpute_file \
+     -javaHome ${JAVA_HOME} \
+     -domainLoc $(dirname "${DOMAIN_HOME}") \
+     -domainAdminUserName ${DOMAIN_ADMIN_USERNAME} \
+     -walletDir ${TMP_FILE_DIR} \
+     -logDir ${TMP_FILE_DIR}
 }
 
 validateInputs
@@ -281,6 +317,15 @@ echo "step 7"
 create_oraInstloc
 
 echo "step 8"
-setupOracleBinary
+setupOracleBinaryAndDomain
+
+echo "step 9"
+createInputFile
+
+echo "step 10"
+crateWalletDirectory
+
+echo "step 11"
+runChangeHostCmd
 
 echo "Weblogic Server Installation Completed succesfully."

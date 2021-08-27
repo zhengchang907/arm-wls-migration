@@ -149,6 +149,12 @@
             "metadata": {
                 "description": "domain zip file name in the Storage Account"
             }
+        },
+        "adminHostname": {
+            "type": "string",
+            "metadata": {
+                "description": "hostname for source vm"
+            }
         }
     },
     "variables": {
@@ -355,7 +361,7 @@
                     "fileUris": [
                         "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('migrationScript'), parameters('_artifactsLocationSasToken')))]"
                     ],
-                    "commandToExecute": "[concat('sh',' ',variables('migrationScript'),' ',parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('jdkVersion'),' ',parameters('javaHome'),' ',parameters('ofmBinaryFileName'),' ',parameters('domainZipFileName'),' ',parameters('oracleHome'),' ',parameters('domainHome'),' ',parameters('migrationSaName'),' ',parameters('migrationConName'),' ',parameters('migrationSASToken'))]"
+                    "commandToExecute": "[concat('sh',' ',variables('migrationScript'),' ',parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('jdkVersion'),' ',parameters('javaHome'),' ',parameters('ofmBinaryFileName'),' ',parameters('domainZipFileName'),' ',parameters('oracleHome'),' ',parameters('domainHome'),' ',parameters('migrationSaName'),' ',parameters('migrationConName'),' ',parameters('migrationSASToken'),' ',parameters('adminUsername'),' ',parameters('adminPassword'),' ',parameters('adminHostname'),' ',reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
                 }
             }
         },
