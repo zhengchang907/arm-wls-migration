@@ -281,7 +281,7 @@ function crateWalletDirectory()
     echo ${DOMAIN_ADMIN_PASSWORD} | sudo ${ORACLE_HOME}/oracle_common/common/bin/configWallet.sh -walletDir ${TMP_FILE_DIR} ${DOMAIN_ADMIN_USERNAME}
 }
 
-function runChangeHostCmd(()
+function runChangeHostCmd()
 {
     .${ORACLE_HOME}/oracle_common/common/bin/c/chghost.sh -chgHostInputFile ${TMP_FILE_DIR}/inpute_file \
      -javaHome ${JAVA_HOME} \
