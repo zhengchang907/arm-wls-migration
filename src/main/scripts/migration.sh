@@ -285,7 +285,7 @@ function runChangeHostCmd()
 {
     ${ORACLE_HOME}/oracle_common/bin/chghost.sh -chgHostInputFile ${TMP_FILE_DIR}/inpute_file \
      -javaHome ${JAVA_HOME} \
-     -domainLoc $(dirname "${DOMAIN_HOME}") \
+     -domainLoc ${DOMAIN_HOME} \
      -domainAdminUserName ${DOMAIN_ADMIN_USERNAME} \
      -walletDir ${TMP_FILE_DIR} \
      -logDir ${TMP_FILE_DIR}
