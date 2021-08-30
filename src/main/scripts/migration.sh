@@ -254,13 +254,17 @@ EOF
 
     sed 's@\[INSTALL_PATH\]@'"$ORACLE_INSTALL_PATH"'@' ${TMP_FILE_DIR}/oraInst.loc.template >${TMP_FILE_DIR}/oraInst.loc
     sed -i 's@\[GROUP\]@'"$USER_GROUP"'@' ${TMP_FILE_DIR}/oraInst.loc
+
+    sudo chown -R $username:$groupname $ORACLE_INSTALL_PATH
 }
 
 function setupOracleBinaryAndDomain() {
     cmd="${JAVA_HOME}/bin/java -jar ${TMP_FILE_DIR}/${TARGET_BINARY_FILE_NAME} -targetOracleHomeLoc ${ORACLE_HOME} -invPtrLoc ${TMP_FILE_DIR}/oraInst.loc -javaHome ${JAVA_HOME}"
     echo "cmd to run: $cmd"
     sudo runuser -l oracle -c "${cmd}"
+    sudo chown -R $username:$groupname $ORACLE_INSTALL_PATH
     sudo unzip ${TMP_FILE_DIR}/${TARGET_DOMAIN_FILE_NAME} -d $(dirname "${DOMAIN_HOME}")
+    sudo chown -R $username:$groupname $DOMAIN_HOME
 }
 
 function createInputFile() {
@@ -339,7 +343,7 @@ function admin_boot_setup() {
     mkdir -p "$DOMAIN_HOME/servers/admin/security"
     echo "username=$DOMAIN_ADMIN_USERNAME" >"$DOMAIN_HOME/servers/admin/security/boot.properties"
     echo "password=$DOMAIN_ADMIN_PASSWORD" >>"$DOMAIN_HOME/servers/admin/security/boot.properties"
-    sudo chown -R $username:$groupname $DOMAIN_HOME/servers
+    sudo chown -R $username:$groupname $DOMAIN_HOME
     echo "Completed admin server boot properties"
 }
 
