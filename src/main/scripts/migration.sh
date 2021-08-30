@@ -364,7 +364,7 @@ function wait_for_admin() {
             echo "Error : Maximum attempts exceeded while starting admin server"
             exit 1
         fi
-        adminStatus=$(curl --insecure -ILs $CHECK_URL | tac | grep -m1 HTTP/1.1 | awk {'print $2'})]
+        adminStatus=$(curl --insecure -ILs $CHECK_URL | tac | grep -m1 HTTP/1.1 | awk {'print $2'})
         echo "adminStatus: $adminStatus"
         if [ "$adminStatus" == "200" ]; then
             echo "Server started succesfully..."
