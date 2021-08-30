@@ -17,6 +17,13 @@ export DOMAIN_ADMIN_USERNAME="${13}"
 export DOMAIN_ADMIN_PASSWORD="${14}"
 export SOURCE_HOST_NAME="${15}"
 export TARGET_HOST_NAME="${16}"
+export wlsAdminPort=7001
+export wlsSSLAdminPort=7002
+export wlsAdminT3ChannelPort=7005
+export wlsAdminURL="$TARGET_HOST_NAME:$wlsAdminPort"
+export CHECK_URL="http://$wlsAdminURL/weblogic/ready"
+export startWebLogicScript="${DOMAIN_HOME}/startWebLogic.sh"
+export stopWebLogicScript="${DOMAIN_HOME}/bin/customStopWebLogic.sh"
 
 function echo_stderr ()
 {
@@ -291,6 +298,95 @@ function runChangeHostCmd()
      -logDir ${TMP_FILE_DIR}
 }
 
+function updateNetworkRules()
+{
+    # for Oracle Linux 7.3, 7.4, iptable is not running.
+    if [ -z `command -v firewall-cmd` ]; then
+        return 0
+    fi
+    
+    # for Oracle Linux 7.6, open weblogic ports
+    echo "update network rules for admin server"
+    sudo firewall-cmd --zone=public --add-port=$wlsAdminPort/tcp
+    sudo firewall-cmd --zone=public --add-port=$wlsSSLAdminPort/tcp
+    sudo firewall-cmd --zone=public --add-port=$wlsAdminT3ChannelPort/tcp
+    sudo firewall-cmd --runtime-to-permanent
+    sudo systemctl restart firewalld
+}
+
+# Create adminserver as service
+function create_adminserver_service()
+{
+echo "Creating weblogic admin server service"
+cat <<EOF >/etc/systemd/system/wls_admin.service
+[Unit]
+Description=WebLogic Adminserver service
+After=network-online.target
+Wants=network-online.target
+ 
+[Service]
+Type=simple
+WorkingDirectory="$DOMAIN_HOME"
+ExecStart="${startWebLogicScript}"
+ExecStop="${stopWebLogicScript}"
+User=oracle
+Group=oracle
+KillMode=process
+LimitNOFILE=65535
+Restart=always
+RestartSec=3
+ 
+[Install]
+WantedBy=multi-user.target
+EOF
+echo "Completed weblogic admin server service"
+}
+
+function admin_boot_setup()
+{
+echo "Creating admin server boot properties"
+ #Create the boot.properties directory
+ mkdir -p "$DOMAIN_HOME/servers/admin/security"
+ echo "username=$DOMAIN_ADMIN_USERNAME" > "$DOMAIN_HOME/servers/admin/security/boot.properties"
+ echo "password=$DOMAIN_ADMIN_PASSWORD" >> "$DOMAIN_HOME/servers/admin/security/boot.properties"
+ sudo chown -R $username:$groupname $DOMAIN_HOME/servers
+ echo "Completed admin server boot properties"
+}
+
+function enableAndStartAdminServerService()
+{
+    echo "Starting weblogic admin server as service"
+    sudo systemctl enable wls_admin
+    sudo systemctl daemon-reload
+    sudo systemctl start wls_admin
+}
+
+function wait_for_admin()
+{
+ #wait for admin to start
+count=1
+export CHECK_URL="http://$wlsAdminURL/weblogic/ready"
+status=`curl --insecure -ILs $CHECK_URL | tac | grep -m1 HTTP/1.1 | awk {'print $2'}`
+while [[ "$status" != "200" ]]
+do
+  echo "Waiting for admin server to start"
+  count=$((count+1))
+  if [ $count -le 30 ];
+  then
+      sleep 1m
+  else
+     echo "Error : Maximum attempts exceeded while starting admin server"
+     exit 1
+  fi
+  status=`curl --insecure -ILs $CHECK_URL | tac | grep -m1 HTTP/1.1 | awk {'print $2'}`
+  if [ "$status" == "200" ];
+  then
+     echo "Server started succesfully..."
+     break
+  fi
+done  
+}
+
 validateInputs
 
 addOracleGroupAndUser
@@ -327,5 +423,15 @@ crateWalletDirectory
 
 echo "step 11"
 runChangeHostCmd
+
+updateNetworkRules
+
+create_adminserver_service
+
+admin_boot_setup
+
+enableAndStartAdminServerService
+
+wait_for_admin
 
 echo "Weblogic Server Installation Completed succesfully."
