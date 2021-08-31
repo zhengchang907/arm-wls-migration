@@ -119,24 +119,6 @@ function setupInstallPath() {
     sudo rm -rf $TMP_FILE_DIR/*
 }
 
-#Function to cleanup all temporary files
-function cleanup() {
-    echo "Cleaning up temporary files..."
-
-    rm -f $TMP_FILE_DIR/jdk-11.0.9_linux-x64_bin.tar.gz
-
-    rm -rf $JDK_HOME/jdk-11.0.9_linux-x64_bin.tar.gz
-
-    rm -f ${TMP_FILE_DIR}/azcopy.tar.gz
-
-    rm -rf ${TMP_FILE_DIR}/azcopy
-
-    rm -f ${TMP_FILE_DIR}/${TARGET_DOMAIN_FILE_NAME}
-    rm -f ${TMP_FILE_DIR}/${TARGET_BINARY_FILE_NAME}
-
-    echo "Cleanup completed."
-}
-
 download_azcopy() {
     cd $TMP_FILE_DIR
 
@@ -190,13 +172,20 @@ function installUtilities() {
 #download jdk from OTN
 function downloadJDK() {
     echo "Downloading jdk from OTN..."
+    if [ $jdkVersion == 11 ]; then
+        jdk_file_name="jdk-11.0.9_linux-x64_bin.tar.gz"
+        jdk_download_link="https://download.oracle.com/otn/java/jdk/11.0.9+7/eec35ebefb3f4133bd045b891f05db94/jdk-11.0.9_linux-x64_bin.tar.gz"
+    else
+        jdk_file_name="jdk-8u131-linux-x64.tar.gz"
+        jdk_download_link="https://download.oracle.com/otn/java/jdk/8u131-b11/d54c1d3a095b4ff2b6607d096fa80163/jdk-8u131-linux-x64.tar.gz"
+    fi
 
     for in in {1..5}; do
-        curl -s https://raw.githubusercontent.com/typekpb/oradown/master/oradown.sh | bash -s -- --cookie=accept-weblogicserver-server --username="${otnusername}" --password="${otnpassword}" https://download.oracle.com/otn/java/jdk/11.0.9+7/eec35ebefb3f4133bd045b891f05db94/jdk-11.0.9_linux-x64_bin.tar.gz
-        tar -tzf $TMP_FILE_DIR/jdk-11.0.9_linux-x64_bin.tar.gz
+        curl -s https://raw.githubusercontent.com/typekpb/oradown/master/oradown.sh | bash -s -- --cookie=accept-weblogicserver-server --username="${otnusername}" --password="${otnpassword}" $jdk_download_link
+        tar -tzf $TMP_FILE_DIR/${jdk_file_name}
         if [ $? != 0 ]; then
             echo "Download failed. Trying again..."
-            rm -f $TMP_FILE_DIR/jdk-11.0.9_linux-x64_bin.tar.gz
+            rm -f $TMP_FILE_DIR/${jdk_file_name}
         else
             echo "Downloaded JDK successfully"
             break
@@ -206,10 +195,10 @@ function downloadJDK() {
 
 function setupJDK() {
     echo "Setup JDK start"
-    sudo cp $TMP_FILE_DIR/jdk-11.0.9_linux-x64_bin.tar.gz $JDK_HOME/jdk-11.0.9_linux-x64_bin.tar.gz
+    sudo cp $TMP_FILE_DIR/${jdk_file_name} $JDK_HOME/${jdk_file_name}
 
     echo "extracting and setting up jdk..."
-    sudo tar -zxvf $JDK_HOME/jdk-11.0.9_linux-x64_bin.tar.gz --directory $JDK_HOME
+    sudo tar -zxvf $JDK_HOME/${jdk_file_name} --directory $JDK_HOME
     sudo chown -R $username:$groupname $JDK_HOME
 
     export PATH=$JAVA_HOME/bin:$PATH
@@ -381,37 +370,24 @@ validateInputs
 
 addOracleGroupAndUser
 
-echo "step 1"
 setupInstallPath
 
-echo "step 2"
-cleanup
-
-echo "step 3"
 installUtilities
 
-echo "step 4"
 downloadJDK
 
-echo "step 5"
 setupJDK
 
-echo "step 6"
 downloadMigrationData
 
-echo "step 7"
 create_oraInstloc
 
-echo "step 8"
 setupOracleBinaryAndDomain
 
-echo "step 9"
 createInputFile
 
-echo "step 10"
 crateWalletDirectory
 
-echo "step 11"
 runChangeHostCmd
 
 updateNetworkRules
