@@ -156,6 +156,12 @@
             "metadata": {
                 "description": "hostname for source vm"
             }
+        },
+        "identity": {
+            "type": "object",
+            "metadata": {
+                "description": "User-assigned managed identity granted with contributor role of the same subscription"
+            }
         }
     },
     "variables": {
@@ -173,11 +179,13 @@
         "vmSize": "[parameters('vmSizeSelect')]",
         "virtualNetworkName": "olvmVNET",
         "migrationScript": "migration.sh",
+        "adminMigrationScript": "adminMigration.sh",
         "linuxOSVersion": "[parameters('linuxOSVersion')]",
         "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
         "networkSecurityGroupName": "[concat(parameters('dnsLabelPrefix'), '-nsg')]",
         "networkSecurityGroupRef": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
-        "requiredPortrange": ",65200-65535,5556"
+        "requiredPortrange": ",65200-65535,5556",
+        "const_scriptLocation": "[uri(parameters('_artifactsLocation'), 'scripts/')]"
     },
     "resources": [
         {
@@ -346,26 +354,47 @@
             }
         },
         {
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(variables('vmName'),'/newuserscript')]",
-            "apiVersion": "2019-07-01",
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "${azure.apiVersion.deploymentScript}",
+            "name": "deploymentscripttest",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
             ],
+            "kind": "AzureCLI",
+            "identity": "[parameters('identity')]",
             "properties": {
-                "publisher": "Microsoft.Azure.Extensions",
-                "type": "CustomScript",
-                "typeHandlerVersion": "2.0",
-                "autoUpgradeMinorVersion": true,
-                "settings": {
-                    "fileUris": [
-                        "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('migrationScript'), parameters('_artifactsLocationSasToken')))]"
-                    ],
-                    "commandToExecute": "[concat('sh',' ',variables('migrationScript'),' ',parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('jdkVersion'),' ',parameters('javaHome'),' ',parameters('ofmBinaryFileName'),' ',parameters('domainZipFileName'),' ',parameters('oracleHome'),' ',parameters('domainHome'),' ',parameters('migrationSaName'),' ',parameters('migrationConName'),' ',parameters('migrationSASToken'),' ',parameters('adminUsername'),' ',parameters('adminPassword'),' ',parameters('adminHostname'),' ',reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
-                }
+                "AzCliVersion": "2.15.0",
+                "arguments": "[concat(variables('migrationScript'),' ',parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('jdkVersion'),' ',parameters('javaHome'),' ',parameters('ofmBinaryFileName'),' ',parameters('domainZipFileName'),' ',parameters('oracleHome'),' ',parameters('domainHome'),' ',parameters('migrationSaName'),' ',parameters('migrationConName'),' ',parameters('migrationSASToken'),' ',parameters('adminUsername'),' ',parameters('adminPassword'),' ',parameters('adminHostname'),' ',reference(variables('publicIPAddressName')).dnsSettings.fqdn,' ',resourceGroup().name,' ',variables('vmName'),' ',variables('const_scriptLocation'))]",
+                "primaryScriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('migrationScript'), parameters('_artifactsLocationSasToken')))]",
+                "supportingScriptsUris": [
+                    "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('adminMigrationScript'), parameters('_artifactsLocationSasToken')))]"
+                ],
+                "cleanupPreference": "OnSuccess",
+                "retentionInterval": "P1D"
             }
         },
+        // {
+        //     "type": "Microsoft.Compute/virtualMachines/extensions",
+        //     "name": "[concat(variables('vmName'),'/newuserscript')]",
+        //     "apiVersion": "2019-07-01",
+        //     "location": "[parameters('location')]",
+        //     "dependsOn": [
+        //         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+        //     ],
+        //     "properties": {
+        //         "publisher": "Microsoft.Azure.Extensions",
+        //         "type": "CustomScript",
+        //         "typeHandlerVersion": "2.0",
+        //         "autoUpgradeMinorVersion": true,
+        //         "settings": {
+        //             "fileUris": [
+        //                 "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('adminMigrationScript'), parameters('_artifactsLocationSasToken')))]"
+        //             ],
+        //             "commandToExecute": "[concat('sh',' ',variables('adminMigrationScript'),' ',parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('jdkVersion'),' ',parameters('javaHome'),' ',parameters('ofmBinaryFileName'),' ',parameters('domainZipFileName'),' ',parameters('oracleHome'),' ',parameters('domainHome'),' ',parameters('migrationSaName'),' ',parameters('migrationConName'),' ',parameters('migrationSASToken'),' ',parameters('adminUsername'),' ',parameters('adminPassword'),' ',parameters('adminHostname'),' ',reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+        //         }
+        //     }
+        // },
         {
             "apiVersion": "2019-10-01",
             "name": "create-target-environment-and-lift-shift-end",
