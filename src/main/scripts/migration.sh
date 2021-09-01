@@ -31,3 +31,68 @@ az vm extension set --name CustomScript \
     --settings "{\"fileUris\": [\"${SCRIPT_LOCATION}adminMigration.sh\"]}" \
     --protected-settings "{\"commandToExecute\":\"sh adminMigration.sh  ${acceptOTNLicenseAgreement} ${otnusername} ${otnpassword} ${jdkVersion} ${JAVA_HOME} ${TARGET_BINARY_FILE_NAME} ${TARGET_DOMAIN_FILE_NAME} ${ORACLE_HOME} ${DOMAIN_HOME} ${AZ_ACCOUNT_NAME} ${AZ_BLOB_CONTAINER} ${AZ_SAS_TOKEN} ${DOMAIN_ADMIN_USERNAME} ${DOMAIN_ADMIN_PASSWORD} ${SOURCE_HOST_NAME} ${TARGET_HOST_NAME}\"}"
     
+function echo_stderr() {
+    echo "$@" >&2
+}
+
+function validateInputs() {
+    if [ -z "$acceptOTNLicenseAgreement" ]; then
+        echo_stderr "acceptOTNLicenseAgreement is required. Value should be either Y/y or N/n"
+        exit 1
+    fi
+
+    if [[ ! ${acceptOTNLicenseAgreement} =~ ^[Yy]$ ]]; then
+        echo_stderr "acceptOTNLicenseAgreement value not specified as Y/y (yes). Exiting installation Weblogic Server process."
+        exit 1
+    fi
+
+    if [[ -z "$otnusername" || -z "$otnpassword" ]]; then
+        echo_stderr "otnusername or otnpassword is required. "
+        exit 1
+    fi
+
+    if [ -z "$jdkVersion" ]; then
+        echo_stderr "jdkVersion needs to be specified"
+        exit 1
+    fi
+
+    if [ -z "$JAVA_HOME" ]; then
+        echo_stderr "JAVA_HOME needs to be specified"
+        exit 1
+    fi
+
+    if [ -z "$AZ_ACCOUNT_NAME" ]; then
+        echo_stderr "AZ_ACCOUNT_NAME needs to be specified"
+        exit 1
+    fi
+
+    if [ -z "$AZ_BLOB_CONTAINER" ]; then
+        echo_stderr "AZ_BLOB_CONTAINER needs to be specified"
+        exit 1
+    fi
+
+    if [ -z "$AZ_SAS_TOKEN" ]; then
+        echo_stderr "AZ_SAS_TOKEN needs to be specified"
+        exit 1
+    fi
+
+    if [ -z "$TARGET_DOMAIN_FILE_NAME" ]; then
+        echo_stderr "TARGET_DOMAIN_FILE_NAME needs to be specified"
+        exit 1
+    fi
+
+    if [ -z "$TARGET_BINARY_FILE_NAME" ]; then
+        echo_stderr "TARGET_BINARY_FILE_NAME needs to be specified"
+        exit 1
+    fi
+
+    if [ -z "$ORACLE_HOME" ]; then
+        echo_stderr "ORACLE_HOME needs to be specified"
+        exit 1
+    fi
+
+    if [ -z "$DOMAIN_HOME" ]; then
+        echo_stderr "DOMAIN_HOME needs to be specified"
+        exit 1
+    fi
+}

@@ -355,7 +355,7 @@
         },
         {
             "type": "Microsoft.Resources/deploymentScripts",
-            "apiVersion": "${azure.apiVersion.deploymentScript}",
+            "apiVersion": "2020-10-01",
             "name": "deploymentscripttest",
             "location": "[parameters('location')]",
             "dependsOn": [
@@ -365,7 +365,7 @@
             "identity": "[parameters('identity')]",
             "properties": {
                 "AzCliVersion": "2.15.0",
-                "arguments": "[concat(variables('migrationScript'),' ',parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('jdkVersion'),' ',parameters('javaHome'),' ',parameters('ofmBinaryFileName'),' ',parameters('domainZipFileName'),' ',parameters('oracleHome'),' ',parameters('domainHome'),' ',parameters('migrationSaName'),' ',parameters('migrationConName'),' ',parameters('migrationSASToken'),' ',parameters('adminUsername'),' ',parameters('adminPassword'),' ',parameters('adminHostname'),' ',reference(variables('publicIPAddressName')).dnsSettings.fqdn,' ',resourceGroup().name,' ',variables('vmName'),' ',variables('const_scriptLocation'))]",
+                "arguments": "[concat(parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('jdkVersion'),' ',parameters('javaHome'),' ',parameters('ofmBinaryFileName'),' ',parameters('domainZipFileName'),' ',parameters('oracleHome'),' ',parameters('domainHome'),' ',parameters('migrationSaName'),' ',parameters('migrationConName'),' ',parameters('migrationSASToken'),' ',parameters('adminUsername'),' ',parameters('adminPassword'),' ',parameters('adminHostname'),' ',reference(variables('publicIPAddressName')).dnsSettings.fqdn,' ',resourceGroup().name,' ',variables('vmName'),' ',variables('const_scriptLocation'))]",
                 "primaryScriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('migrationScript'), parameters('_artifactsLocationSasToken')))]",
                 "supportingScriptsUris": [
                     "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('adminMigrationScript'), parameters('_artifactsLocationSasToken')))]"
@@ -400,7 +400,7 @@
             "name": "create-target-environment-and-lift-shift-end",
             "type": "Microsoft.Resources/deployments",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('vmName'), 'newuserscript')]"
+                "deploymentscripttest"
             ],
             "properties": {
                 "mode": "Incremental",
