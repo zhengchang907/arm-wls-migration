@@ -259,7 +259,7 @@ function setupOracleBinaryAndDomain() {
 function createInputFile() {
     echo "creating Install Location Template..."
 
-    cat <<EOF >$TMP_FILE_DIR/inpute_file.template
+    cat <<EOF >$TMP_FILE_DIR/input_file.template
 [ARGUMENTS]
 
 [SERVER_HOST_MAPPING]
@@ -267,8 +267,8 @@ function createInputFile() {
 [source_host_name]=[target_host_name]
 EOF
 
-    sed 's@\[source_host_name\]@'"$SOURCE_HOST_NAME"'@' ${TMP_FILE_DIR}/inpute_file.template >${TMP_FILE_DIR}/inpute_file
-    sed -i 's@\[target_host_name\]@'"$TARGET_HOST_NAME"'@' ${TMP_FILE_DIR}/inpute_file
+    sed 's@\[source_host_name\]@'"$SOURCE_HOST_NAME"'@' ${TMP_FILE_DIR}/input_file.template >${TMP_FILE_DIR}/input_file
+    sed -i 's@\[target_host_name\]@'"$TARGET_HOST_NAME"'@' ${TMP_FILE_DIR}/input_file
 }
 
 function crateWalletDirectory() {
@@ -276,7 +276,7 @@ function crateWalletDirectory() {
 }
 
 function runChangeHostCmd() {
-    ${ORACLE_HOME}/oracle_common/bin/chghost.sh -chgHostInputFile ${TMP_FILE_DIR}/inpute_file \
+    ${ORACLE_HOME}/oracle_common/bin/chghost.sh -chgHostInputFile ${TMP_FILE_DIR}/input_file \
         -javaHome ${JAVA_HOME} \
         -domainLoc ${DOMAIN_HOME} \
         -domainAdminUserName ${DOMAIN_ADMIN_USERNAME} \
