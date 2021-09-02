@@ -20,6 +20,8 @@ export RESOURCE_GROUP_NAME="${17}"
 export ADMIN_VM_NAME="${18}"
 export SCRIPT_LOCATION="${19}"
 
+echo $@
+
 az vm extension set --name CustomScript \
     --extension-instance-name admin-weblogic-setup-script \
     --resource-group ${RESOURCE_GROUP_NAME} \

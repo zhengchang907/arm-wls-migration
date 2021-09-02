@@ -177,7 +177,6 @@
         "subnetPrefix": "10.0.0.0/24",
         "storageAccountType": "Standard_LRS",
         "publicIPAddressType": "Dynamic",
-        "vmName": "WebLogicServerVM",
         "vmSize": "[parameters('vmSizeSelect')]",
         "virtualNetworkName": "olvmVNET",
         "migrationScript": "migration.sh",
@@ -454,7 +453,7 @@
             "identity": "[parameters('identity')]",
             "properties": {
                 "AzCliVersion": "2.15.0",
-                "arguments": "[concat(parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('jdkVersion'),' ',parameters('javaHome'),' ',parameters('adminNodeInfo').ofmBinaryFileName,' ',parameters('adminNodeInfo').domainZipFileName,' ',parameters('oracleHome'),' ',parameters('domainHome'),' ',parameters('migrationSaName'),' ',parameters('migrationConName'),' ',parameters('migrationSASToken'),' ',parameters('adminUsername'),' ',parameters('adminPassword'),' ',parameters('adminNodeInfo').hostname,' ',reference(concat(variables('const_adminVMname'),variables('name_publicIPAddress'))).dnsSettings.fqdn,' ',resourceGroup().name,' ',variables('vmName'),' ',variables('const_scriptLocation'))]",
+                "arguments": "[concat(parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('jdkVersion'),' ',parameters('javaHome'),' ',parameters('adminNodeInfo').ofmBinaryFileName,' ',parameters('adminNodeInfo').domainZipFileName,' ',parameters('oracleHome'),' ',parameters('domainHome'),' ',parameters('migrationSaName'),' ',parameters('migrationConName'),' ',parameters('migrationSASToken'),' ',parameters('adminUsername'),' ',parameters('adminPassword'),' ',parameters('adminNodeInfo').hostname,' ',reference(concat(variables('const_adminVMname'),variables('name_publicIPAddress'))).dnsSettings.fqdn,' ',resourceGroup().name,' ',variables('const_adminVMName'),' ',variables('const_scriptLocation'))]",
                 "primaryScriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('migrationScript'), parameters('_artifactsLocationSasToken')))]",
                 "supportingScriptsUris": [
                     "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('adminMigrationScript'), parameters('_artifactsLocationSasToken')))]"
