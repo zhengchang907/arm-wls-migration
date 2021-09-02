@@ -139,28 +139,31 @@
                 "description": "SAS Token of migration data Storage Account"
             }
         },
-        "ofmBinaryFileName": {
-            "type": "string",
-            "metadata": {
-                "description": "OFM binary file name in the Storage Account"
-            }
-        },
-        "domainZipFileName": {
-            "type": "string",
-            "metadata": {
-                "description": "domain zip file name in the Storage Account"
-            }
-        },
-        "adminHostname": {
-            "type": "string",
-            "metadata": {
-                "description": "hostname for source vm"
-            }
-        },
         "identity": {
             "type": "object",
             "metadata": {
                 "description": "User-assigned managed identity granted with contributor role of the same subscription"
+            }
+        },
+        "adminNodeInfo": {
+            "type": "object",
+            "metadata": {
+                "description": "User-assigned managed identity granted with contributor role of the same subscription"
+            }
+        },
+        "managedNodeInfo": {
+            "type": "array",
+            "metadata": {
+                "description": "User-assigned managed identity granted with contributor role of the same subscription"
+            }
+        },
+        "numberOfInstances": {
+            "type": "int",
+            "defaultValue": 2,
+            "minValue": 2,
+            "maxValue": 5,
+            "metadata": {
+                "description": "Number of VMs to deploy, limit 5 since this sample is using a single storage account"
             }
         }
     },
@@ -185,7 +188,11 @@
         "networkSecurityGroupName": "[concat(parameters('dnsLabelPrefix'), '-nsg')]",
         "networkSecurityGroupRef": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
         "requiredPortrange": ",65200-65535,5556",
-        "const_scriptLocation": "[uri(parameters('_artifactsLocation'), 'scripts/')]"
+        "const_scriptLocation": "[uri(parameters('_artifactsLocation'), 'scripts/')]",
+        "const_adminVMname": "adminVM",
+        "const_managedVMPrefix": "mspVM",
+        "name_publicIPAddress": "_PublicIP",
+        "name_availabilitySet": "WLSCluster-AvailabilitySet"
     },
     "resources": [
         {
@@ -221,6 +228,47 @@
                             "direction": "Inbound",
                             "destinationPortRanges": "[split(concat(parameters('portsToExpose'),variables('requiredPortrange')), ',')]"
                         }
+                    },
+                    {
+                        "name": "WebLogicNMPort",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 201,
+                            "direction": "Inbound",
+                            "destinationPortRanges": [ "5556" ]
+                        }
+                    },
+                    {
+                        "name": "WebLogicAdminChannelPort",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 202,
+                            "direction": "Inbound",
+                            "destinationPortRanges": [ "7005" ]
+                        }
+                    },
+                    {
+                        "name": "WebLogicManagedChannelPortsDenied",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 230,
+                            "direction": "Inbound",
+                            "destinationPortRanges": [
+                                "8501"
+                            ],
+                            "sourceAddressPrefix": "Internet"
+                        }
                     }
                 ]
             }
@@ -235,19 +283,30 @@
             },
             "kind": "Storage",
             "properties": {
-            }
+                "supportsHttpsTrafficOnly": false
+            },
+             "dependsOn": [
+                "[variables('networkSecurityGroupName')]"
+            ]
         },
         {
             "type": "Microsoft.Network/publicIPAddresses",
             "apiVersion": "2018-11-01",
-            "name": "[variables('publicIPAddressName')]",
+            "name": "[if(equals(copyIndex(),0),concat(variables('const_adminVMname'),variables('name_publicIPAddress')),concat(variables('const_managedVMPrefix'), copyIndex(),variables('name_publicIPAddress')))]",
             "location": "[parameters('location')]",
+            "copy": {
+                "name": "publicIPLoop",
+                "count": "[parameters('numberOfInstances')]"
+            },
             "properties": {
                 "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
                 "dnsSettings": {
-                    "domainNameLabel": "[concat(toLower(parameters('dnsLabelPrefix')),'-',take(replace(parameters('guidValue'),'-',''),10))]"
+                    "domainNameLabel": "[concat(toLower(parameters('dnsLabelPrefix')),copyindex(),'-',take(replace(parameters('guidValue'),'-',''),10))]"
                 }
-            }
+            },
+            "dependsOn": [
+                "[variables('storageAccountName')]"
+            ]
         },
         {
             "type": "Microsoft.Network/virtualNetworks",
@@ -279,10 +338,14 @@
         {
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2018-11-01",
-            "name": "[variables('nicName')]",
+            "name": "[if(equals(copyIndex(),0),concat(variables('const_adminVMName'),variables('nicName')),concat(variables('const_managedVMPrefix'), copyIndex(),variables('nicName')))]",
             "location": "[parameters('location')]",
+            "copy": {
+                "name": "nicLoop",
+                "count": "[parameters('numberOfInstances')]"
+            },
             "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+                "publicIPLoop",
                 "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
             ],
             "properties": {
@@ -292,31 +355,57 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',if(equals(copyIndex(),0),concat(variables('const_adminVMName'),variables('name_publicIPAddress')),concat(variables('const_managedVMPrefix'), copyIndex(),variables('name_publicIPAddress'))))]"
                             },
                             "subnet": {
                                 "id": "[variables('subnetRef')]"
                             }
                         }
                     }
-                ]
+                ],
+                "dnsSettings": {
+                    "internalDnsNameLabel": "[if(equals(copyIndex(),0),variables('const_adminVMName'),concat(variables('const_managedVMPrefix'), copyIndex()))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/availabilitySets",
+            "apiVersion": "${azure.apiVersion}",
+            "location": "[parameters('location')]",
+            "name": "[variables('name_availabilitySet')]",
+            "properties": {
+                "platformFaultDomainCount": 2,
+                "platformUpdateDomainCount": 2
+            },
+            "dependsOn": [
+                "[variables('virtualNetworkName')]"
+            ],
+            "sku": {
+                "name": "Aligned"
             }
         },
         {
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2018-10-01",
-            "name": "[variables('vmName')]",
+            "name": "[if(equals(copyIndex(),0),variables('const_adminVMname'),concat(variables('const_managedVMPrefix'), copyIndex()))]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-                "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+                "nicLoop",
+                "[resourceId('Microsoft.Compute/availabilitySets/', variables('name_availabilitySet'))]"
             ],
+            "copy": {
+                "name": "virtualMachineLoop",
+                "count": "[parameters('numberOfInstances')]"
+            },
             "properties": {
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('name_availabilitySet'))]"
+                },
                 "hardwareProfile": {
                     "vmSize": "[variables('vmSize')]"
                 },
                 "osProfile": {
-                    "computerName": "[variables('vmName')]",
+                    "computerName": "[if(equals(copyIndex(),0),variables('const_adminVMname'),concat(variables('const_managedVMPrefix'), copyIndex()))]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]"
                 },
@@ -341,7 +430,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',if(equals(copyIndex(),0),concat(variables('const_adminVMname'),variables('nicName')),concat(variables('const_managedVMPrefix'), copyIndex(),variables('nicName'))))]"
                         }
                     ]
                 },
@@ -365,7 +454,7 @@
             "identity": "[parameters('identity')]",
             "properties": {
                 "AzCliVersion": "2.15.0",
-                "arguments": "[concat(parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('jdkVersion'),' ',parameters('javaHome'),' ',parameters('ofmBinaryFileName'),' ',parameters('domainZipFileName'),' ',parameters('oracleHome'),' ',parameters('domainHome'),' ',parameters('migrationSaName'),' ',parameters('migrationConName'),' ',parameters('migrationSASToken'),' ',parameters('adminUsername'),' ',parameters('adminPassword'),' ',parameters('adminHostname'),' ',reference(variables('publicIPAddressName')).dnsSettings.fqdn,' ',resourceGroup().name,' ',variables('vmName'),' ',variables('const_scriptLocation'))]",
+                "arguments": "[concat(parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('jdkVersion'),' ',parameters('javaHome'),' ',parameters('adminNodeInfo').ofmBinaryFileName,' ',parameters('adminNodeInfo').domainZipFileName,' ',parameters('oracleHome'),' ',parameters('domainHome'),' ',parameters('migrationSaName'),' ',parameters('migrationConName'),' ',parameters('migrationSASToken'),' ',parameters('adminUsername'),' ',parameters('adminPassword'),' ',parameters('adminNodeInfo').hostname,' ',reference(variables('publicIPAddressName')).dnsSettings.fqdn,' ',resourceGroup().name,' ',variables('vmName'),' ',variables('const_scriptLocation'))]",
                 "primaryScriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('migrationScript'), parameters('_artifactsLocationSasToken')))]",
                 "supportingScriptsUris": [
                     "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('adminMigrationScript'), parameters('_artifactsLocationSasToken')))]"
@@ -374,27 +463,6 @@
                 "retentionInterval": "P1D"
             }
         },
-        // {
-        //     "type": "Microsoft.Compute/virtualMachines/extensions",
-        //     "name": "[concat(variables('vmName'),'/newuserscript')]",
-        //     "apiVersion": "2019-07-01",
-        //     "location": "[parameters('location')]",
-        //     "dependsOn": [
-        //         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
-        //     ],
-        //     "properties": {
-        //         "publisher": "Microsoft.Azure.Extensions",
-        //         "type": "CustomScript",
-        //         "typeHandlerVersion": "2.0",
-        //         "autoUpgradeMinorVersion": true,
-        //         "settings": {
-        //             "fileUris": [
-        //                 "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('adminMigrationScript'), parameters('_artifactsLocationSasToken')))]"
-        //             ],
-        //             "commandToExecute": "[concat('sh',' ',variables('adminMigrationScript'),' ',parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('jdkVersion'),' ',parameters('javaHome'),' ',parameters('ofmBinaryFileName'),' ',parameters('domainZipFileName'),' ',parameters('oracleHome'),' ',parameters('domainHome'),' ',parameters('migrationSaName'),' ',parameters('migrationConName'),' ',parameters('migrationSASToken'),' ',parameters('adminUsername'),' ',parameters('adminPassword'),' ',parameters('adminHostname'),' ',reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
-        //         }
-        //     }
-        // },
         {
             "apiVersion": "2019-10-01",
             "name": "create-target-environment-and-lift-shift-end",
