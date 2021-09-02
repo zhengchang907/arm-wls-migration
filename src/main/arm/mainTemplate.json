@@ -176,7 +176,6 @@
         "subnetName": "Subnet",
         "subnetPrefix": "10.0.0.0/24",
         "storageAccountType": "Standard_LRS",
-        "publicIPAddressName": "olvmPublicIP",
         "publicIPAddressType": "Dynamic",
         "vmName": "WebLogicServerVM",
         "vmSize": "[parameters('vmSizeSelect')]",
@@ -189,7 +188,7 @@
         "networkSecurityGroupRef": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
         "requiredPortrange": ",65200-65535,5556",
         "const_scriptLocation": "[uri(parameters('_artifactsLocation'), 'scripts/')]",
-        "const_adminVMname": "adminVM",
+        "const_adminVMName": "adminVM",
         "const_managedVMPrefix": "mspVM",
         "name_publicIPAddress": "_PublicIP",
         "name_availabilitySet": "WLSCluster-AvailabilitySet"
@@ -292,7 +291,7 @@
         {
             "type": "Microsoft.Network/publicIPAddresses",
             "apiVersion": "2018-11-01",
-            "name": "[if(equals(copyIndex(),0),concat(variables('const_adminVMname'),variables('name_publicIPAddress')),concat(variables('const_managedVMPrefix'), copyIndex(),variables('name_publicIPAddress')))]",
+            "name": "[if(equals(copyIndex(),0),concat(variables('const_adminVMName'),variables('name_publicIPAddress')),concat(variables('const_managedVMPrefix'), copyIndex(),variables('name_publicIPAddress')))]",
             "location": "[parameters('location')]",
             "copy": {
                 "name": "publicIPLoop",
@@ -387,7 +386,7 @@
         {
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2018-10-01",
-            "name": "[if(equals(copyIndex(),0),variables('const_adminVMname'),concat(variables('const_managedVMPrefix'), copyIndex()))]",
+            "name": "[if(equals(copyIndex(),0),variables('const_adminVMName'),concat(variables('const_managedVMPrefix'), copyIndex()))]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "nicLoop",
@@ -405,7 +404,7 @@
                     "vmSize": "[variables('vmSize')]"
                 },
                 "osProfile": {
-                    "computerName": "[if(equals(copyIndex(),0),variables('const_adminVMname'),concat(variables('const_managedVMPrefix'), copyIndex()))]",
+                    "computerName": "[if(equals(copyIndex(),0),variables('const_adminVMName'),concat(variables('const_managedVMPrefix'), copyIndex()))]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]"
                 },
@@ -430,7 +429,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',if(equals(copyIndex(),0),concat(variables('const_adminVMname'),variables('nicName')),concat(variables('const_managedVMPrefix'), copyIndex(),variables('nicName'))))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',if(equals(copyIndex(),0),concat(variables('const_adminVMName'),variables('nicName')),concat(variables('const_managedVMPrefix'), copyIndex(),variables('nicName'))))]"
                         }
                     ]
                 },
@@ -447,14 +446,15 @@
             "apiVersion": "2020-10-01",
             "name": "deploymentscripttest",
             "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+            "dependsOn": [                
+                "[resourceId('Microsoft.Compute/virtualMachines/',variables('const_adminVMName'))]",
+                "virtualMachineLoop"
             ],
             "kind": "AzureCLI",
             "identity": "[parameters('identity')]",
             "properties": {
                 "AzCliVersion": "2.15.0",
-                "arguments": "[concat(parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('jdkVersion'),' ',parameters('javaHome'),' ',parameters('adminNodeInfo').ofmBinaryFileName,' ',parameters('adminNodeInfo').domainZipFileName,' ',parameters('oracleHome'),' ',parameters('domainHome'),' ',parameters('migrationSaName'),' ',parameters('migrationConName'),' ',parameters('migrationSASToken'),' ',parameters('adminUsername'),' ',parameters('adminPassword'),' ',parameters('adminNodeInfo').hostname,' ',reference(variables('publicIPAddressName')).dnsSettings.fqdn,' ',resourceGroup().name,' ',variables('vmName'),' ',variables('const_scriptLocation'))]",
+                "arguments": "[concat(parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('jdkVersion'),' ',parameters('javaHome'),' ',parameters('adminNodeInfo').ofmBinaryFileName,' ',parameters('adminNodeInfo').domainZipFileName,' ',parameters('oracleHome'),' ',parameters('domainHome'),' ',parameters('migrationSaName'),' ',parameters('migrationConName'),' ',parameters('migrationSASToken'),' ',parameters('adminUsername'),' ',parameters('adminPassword'),' ',parameters('adminNodeInfo').hostname,' ',reference(concat(variables('const_adminVMname'),variables('name_publicIPAddress'))).dnsSettings.fqdn,' ',resourceGroup().name,' ',variables('vmName'),' ',variables('const_scriptLocation'))]",
                 "primaryScriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('migrationScript'), parameters('_artifactsLocationSasToken')))]",
                 "supportingScriptsUris": [
                     "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('adminMigrationScript'), parameters('_artifactsLocationSasToken')))]"
@@ -484,11 +484,11 @@
     "outputs": {
         "hostname": {
             "type": "string",
-            "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
+            "value": "[reference(concat(variables('const_adminVMName'),variables('name_publicIPAddress'))).dnsSettings.fqdn]"
         },
         "sshCommand": {
             "type": "string",
-            "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+            "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(concat(variables('const_adminVMName'),variables('name_publicIPAddress'))).dnsSettings.fqdn)]"
         }
     }
 }
