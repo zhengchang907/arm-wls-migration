@@ -17,6 +17,7 @@ export DOMAIN_ADMIN_USERNAME="${13}"
 export DOMAIN_ADMIN_PASSWORD="${14}"
 export SOURCE_HOST_NAME="${15}"
 export TARGET_HOST_NAME="${16}"
+export INPUT_FILE="${17}"
 export wlsAdminPort=7001
 export wlsSSLAdminPort=7002
 export wlsAdminT3ChannelPort=7005
@@ -259,16 +260,18 @@ function setupOracleBinaryAndDomain() {
 function createInputFile() {
     echo "creating Install Location Template..."
 
-    cat <<EOF >$TMP_FILE_DIR/input_file.template
-[ARGUMENTS]
+    echo "${INPUT_FILE}" > ${TMP_FILE_DIR}/input_file
 
-[SERVER_HOST_MAPPING]
-#pattern source_host_name=target_host_name
-[source_host_name]=[target_host_name]
-EOF
+#     cat <<EOF >$TMP_FILE_DIR/input_file.template
+# [ARGUMENTS]
 
-    sed 's@\[source_host_name\]@'"$SOURCE_HOST_NAME"'@' ${TMP_FILE_DIR}/input_file.template >${TMP_FILE_DIR}/input_file
-    sed -i 's@\[target_host_name\]@'"$TARGET_HOST_NAME"'@' ${TMP_FILE_DIR}/input_file
+# [SERVER_HOST_MAPPING]
+# #pattern source_host_name=target_host_name
+# [source_host_name]=[target_host_name]
+# EOF
+
+#     sed 's@\[source_host_name\]@'"$SOURCE_HOST_NAME"'@' ${TMP_FILE_DIR}/input_file.template >${TMP_FILE_DIR}/input_file
+#     sed -i 's@\[target_host_name\]@'"$TARGET_HOST_NAME"'@' ${TMP_FILE_DIR}/input_file
 }
 
 function crateWalletDirectory() {

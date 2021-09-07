@@ -1,36 +1,59 @@
 #!/bin/bash
 
 export acceptOTNLicenseAgreement="${1}"
-export otnusername="${2}"
-export otnpassword="${3}"
-export jdkVersion="${4}"
-export JAVA_HOME="${5}"
-export TARGET_BINARY_FILE_NAME="${6}"
-export TARGET_DOMAIN_FILE_NAME="${7}"
-export ORACLE_HOME="${8}"
-export DOMAIN_HOME="${9}"
-export AZ_ACCOUNT_NAME="${10}"
-export AZ_BLOB_CONTAINER="${11}"
-export AZ_SAS_TOKEN="${12}"
-export DOMAIN_ADMIN_USERNAME="${13}"
-export DOMAIN_ADMIN_PASSWORD="${14}"
-export SOURCE_HOST_NAME="${15}"
-export TARGET_HOST_NAME="${16}"
-export RESOURCE_GROUP_NAME="${17}"
-export ADMIN_VM_NAME="${18}"
-export SCRIPT_LOCATION="${19}"
+export otnCredentials="${2}"
+export migrationStorage="${3}"
+export sourceEnv="${4}"
+export adminVMName="${5}"
+export managedVMPrefix="${6}"
+export numberOfInstances="${7}"
+export scriptLocation="${8}",
+export resourceGroupName="${9}"
 
 echo $@
 
-az vm extension set --name CustomScript \
-    --extension-instance-name admin-weblogic-setup-script \
-    --resource-group ${RESOURCE_GROUP_NAME} \
-    --vm-name ${ADMIN_VM_NAME} \
-    --publisher Microsoft.Azure.Extensions \
-    --version 2.0 \
-    --settings "{\"fileUris\": [\"${SCRIPT_LOCATION}adminMigration.sh\"]}" \
-    --protected-settings "{\"commandToExecute\":\"sh adminMigration.sh  ${acceptOTNLicenseAgreement} ${otnusername} ${otnpassword} ${jdkVersion} ${JAVA_HOME} ${TARGET_BINARY_FILE_NAME} ${TARGET_DOMAIN_FILE_NAME} ${ORACLE_HOME} ${DOMAIN_HOME} ${AZ_ACCOUNT_NAME} ${AZ_BLOB_CONTAINER} ${AZ_SAS_TOKEN} ${DOMAIN_ADMIN_USERNAME} ${DOMAIN_ADMIN_PASSWORD} ${SOURCE_HOST_NAME} ${TARGET_HOST_NAME}\"}"
-    
+yum install jq -y
+
+export otnusername=$(echo $otnCredentials | jq -r '.otnAccountUsername')
+export otnusername=$(echo $otnCredentials | jq -r '.otnAccountPassword')
+export jdkVersion=$(echo $sourceEnv | jq -r '.javaEnv.jdkVersion')
+export JAVA_HOME=$(echo $sourceEnv | jq -r '.javaEnv.javaHome')
+export TARGET_BINARY_FILE_NAME=$(echo $sourceEnv | jq -r '.adminNodeInfo.ofmBinaryFileName')
+export TARGET_DOMAIN_FILE_NAME=$(echo $sourceEnv | jq -r '.adminNodeInfo.domainZipFileName')
+export ORACLE_HOME=$(echo $sourceEnv | jq -r '.ofmEnv.oracleHome')
+export DOMAIN_HOME=$(echo $sourceEnv | jq -r '.domainEnv.domainHome')
+export DOMAIN_ADMIN_USERNAME=$(echo $sourceEnv | jq -r '.domainEnv.adminUsername')
+export DOMAIN_ADMIN_PASSWORD=$(echo $sourceEnv | jq -r '.domainEnv.adminPassword')
+export AZ_ACCOUNT_NAME=$(echo $migrationStorage | jq -r '.migrationSaName')
+export AZ_BLOB_CONTAINER=$(echo $migrationStorage | jq -r '.migrationConName')
+export AZ_SAS_TOKEN=$(echo $migrationStorage | jq -r '.migrationSASToken')
+export ADMIN_SOURCE_HOST_NAME=$(echo $sourceEnv | jq -r '.adminNodeInfo.hostname')
+
+input_file="[ARGUMENTS]"$'\n'"[SERVER_HOST_MAPPING]"
+
 function echo_stderr() {
     echo "$@" >&2
 }
+
+function createInputFile() {
+    ## Add admin node
+    input_file="$input_file"$'\n'"${ADMIN_SOURCE_HOST_NAME}=${adminVMName}"
+    ## Get all host names of source managed node
+    managedNodeHostnames=$(az vm list --resource-group ${resourceGroupName} --query "[?name!='${adminVMName}'].name")
+    ## Concat managed node
+    for ((i=0;i<numberOfInstances-1;i++))
+    do
+        srcHostname=$(echo "$sourceEnv" | jq ".managedNodeInfo" | jq -r ".[$i] | .hostname")
+        targetHostname=$(echo "$managedNode" | jq -r ".[$i]")
+        input_file="$input_file"$'\n'"${srcHostname}=${targetHostname}"
+    done
+}
+
+az vm extension set --name CustomScript \
+    --extension-instance-name admin-weblogic-setup-script \
+    --resource-group ${resourceGroupName} \
+    --vm-name ${adminVMName} \
+    --publisher Microsoft.Azure.Extensions \
+    --version 2.0 \
+    --settings "{\"fileUris\": [\"${scriptLocation}adminMigration.sh\"]}" \
+    --protected-settings "{\"commandToExecute\":\"sh adminMigration.sh  ${acceptOTNLicenseAgreement} ${otnusername} ${otnpassword} ${jdkVersion} ${JAVA_HOME} ${TARGET_BINARY_FILE_NAME} ${TARGET_DOMAIN_FILE_NAME} ${ORACLE_HOME} ${DOMAIN_HOME} ${AZ_ACCOUNT_NAME} ${AZ_BLOB_CONTAINER} ${AZ_SAS_TOKEN} ${DOMAIN_ADMIN_USERNAME} ${DOMAIN_ADMIN_PASSWORD} ${ADMIN_SOURCE_HOST_NAME} ${adminVMName} ${input_file}\"}"

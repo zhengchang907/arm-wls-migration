@@ -20,6 +20,13 @@
             "type": "string",
             "defaultValue": "[newGuid()]"
         },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
         "adminUsername": {
             "type": "string",
             "metadata": {
@@ -32,45 +39,6 @@
                 "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
             }
         },
-        "acceptOTNLicenseAgreement": {
-            "type": "string",
-            "metadata": {
-                "description": "Do you agree to provide OTN credentials to accept OTN License Agreement? Enter Y or y to agree, else N or n"
-            }
-        },
-        "otnAccountUsername": {
-            "type": "string",
-            "metadata": {
-                "description": "Username for your Oracle Technology Network account"
-            }
-        },
-        "otnAccountPassword": {
-            "type": "securestring",
-            "metadata": {
-                "description": "Password for your Oracle Technology Network account"
-            }
-        },
-        "portsToExpose": {
-            "type": "string",
-            "defaultValue": "22,80,443,7001-9000",
-            "metadata": {
-                "description": "Ports and port ranges to expose"
-            }
-        },
-        "dnsLabelPrefix": {
-            "defaultValue": "wls",
-            "type": "string",
-            "metadata": {
-                "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
-            }
-        },
-        "location": {
-            "type": "string",
-            "defaultValue": "[resourceGroup().location]",
-            "metadata": {
-                "description": "Location for all resources."
-            }
-        },
         "vmSizeSelect": {
             "type": "string",
             "defaultValue": "Standard_D2_v3",
@@ -81,33 +49,13 @@
                 "description": "Select appropriate VM Size as per requirement (Standard_A1, Standard_A2, Standard_A3, Standard_A4)"
             }
         },
-        "jdkVersion": {
-            "type": "string",
-            "defaultValue": "11",
-            "allowedValues": [
-                "8",
-                "11"
-            ],
+        "numberOfInstances": {
+            "type": "int",
+            "defaultValue": 2,
+            "minValue": 2,
+            "maxValue": 5,
             "metadata": {
-                "description": "Select appropriate JDK version"
-            }
-        },
-        "javaHome": {
-            "type": "string",
-            "metadata": {
-                "description": "JDK Home, must match the source environment"
-            }
-        },
-        "oracleHome": {
-            "type": "string",
-            "metadata": {
-                "description": "Oracle Home, must match the source environment"
-            }
-        },
-        "domainHome": {
-            "type": "string",
-            "metadata": {
-                "description": "Domain Home, must match the source environment"
+                "description": "Number of VMs to deploy, limit 5 since this sample is using a single storage account"
             }
         },
         "linuxOSVersion": {
@@ -121,49 +69,34 @@
                 "description": "Select appropriate Oracle Linux version"
             }
         },
-        "migrationSaName": {
-            "type": "string",
-            "metadata": {
-                "description": "Storage Account name of migration data"
-            }
-        },
-        "migrationConName": {
-            "type": "string",
-            "metadata": {
-                "description": "Container name of migration data"
-            }
-        },
-        "migrationSASToken": {
-            "type": "string",
-            "metadata": {
-                "description": "SAS Token of migration data Storage Account"
-            }
-        },
         "identity": {
             "type": "object",
             "metadata": {
                 "description": "User-assigned managed identity granted with contributor role of the same subscription"
             }
         },
-        "adminNodeInfo": {
+        "acceptOTNLicenseAgreement": {
+            "type": "string",
+            "metadata": {
+                "description": "Do you agree to provide OTN credentials to accept OTN License Agreement? Enter Y or y to agree, else N or n"
+            }
+        },
+        "otnCredentials": {
             "type": "object",
             "metadata": {
-                "description": "User-assigned managed identity granted with contributor role of the same subscription"
+                "description": "Username and password for your Oracle Technology Network account"
             }
         },
-        "managedNodeInfo": {
-            "type": "array",
+        "migrationStorage": {
+            "type": "object",
             "metadata": {
-                "description": "User-assigned managed identity granted with contributor role of the same subscription"
+                "description": "source environment files"
             }
         },
-        "numberOfInstances": {
-            "type": "int",
-            "defaultValue": 2,
-            "minValue": 2,
-            "maxValue": 5,
+        "sourceEnv": {
+            "type": "object",
             "metadata": {
-                "description": "Number of VMs to deploy, limit 5 since this sample is using a single storage account"
+                "description": "source environment details"
             }
         }
     },
@@ -182,8 +115,10 @@
         "migrationScript": "migration.sh",
         "adminMigrationScript": "adminMigration.sh",
         "linuxOSVersion": "[parameters('linuxOSVersion')]",
+        "const_portsToExpose": "22,80,443,7001-9000",
+        "const_dnsLabelPrefix":"wls",
         "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-        "networkSecurityGroupName": "[concat(parameters('dnsLabelPrefix'), '-nsg')]",
+        "networkSecurityGroupName": "[concat(variables('const_dnsLabelPrefix'), '-nsg')]",
         "networkSecurityGroupRef": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
         "requiredPortrange": ",65200-65535,5556",
         "const_scriptLocation": "[uri(parameters('_artifactsLocation'), 'scripts/')]",
@@ -224,7 +159,7 @@
                             "access": "Allow",
                             "priority": 320,
                             "direction": "Inbound",
-                            "destinationPortRanges": "[split(concat(parameters('portsToExpose'),variables('requiredPortrange')), ',')]"
+                            "destinationPortRanges": "[split(concat(variables('const_portsToExpose'),variables('requiredPortrange')), ',')]"
                         }
                     },
                     {
@@ -283,7 +218,7 @@
             "properties": {
                 "supportsHttpsTrafficOnly": false
             },
-             "dependsOn": [
+            "dependsOn": [
                 "[variables('networkSecurityGroupName')]"
             ]
         },
@@ -299,7 +234,7 @@
             "properties": {
                 "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
                 "dnsSettings": {
-                    "domainNameLabel": "[concat(toLower(parameters('dnsLabelPrefix')),copyindex(),'-',take(replace(parameters('guidValue'),'-',''),10))]"
+                    "domainNameLabel": "[concat(toLower(variables('const_dnsLabelPrefix')),copyindex(),'-',take(replace(parameters('guidValue'),'-',''),10))]"
                 }
             },
             "dependsOn": [
@@ -445,7 +380,7 @@
             "apiVersion": "2020-10-01",
             "name": "deploymentscripttest",
             "location": "[parameters('location')]",
-            "dependsOn": [                
+            "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines/',variables('const_adminVMName'))]",
                 "virtualMachineLoop"
             ],
@@ -453,7 +388,7 @@
             "identity": "[parameters('identity')]",
             "properties": {
                 "AzCliVersion": "2.15.0",
-                "arguments": "[concat(parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('jdkVersion'),' ',parameters('javaHome'),' ',parameters('adminNodeInfo').ofmBinaryFileName,' ',parameters('adminNodeInfo').domainZipFileName,' ',parameters('oracleHome'),' ',parameters('domainHome'),' ',parameters('migrationSaName'),' ',parameters('migrationConName'),' ',parameters('migrationSASToken'),' ',parameters('adminUsername'),' ',parameters('adminPassword'),' ',parameters('adminNodeInfo').hostname,' ',reference(concat(variables('const_adminVMname'),variables('name_publicIPAddress'))).dnsSettings.fqdn,' ',resourceGroup().name,' ',variables('const_adminVMName'),' ',variables('const_scriptLocation'))]",
+                "arguments": "[concat(parameters('acceptOTNLicenseAgreement'),' ',parameters('otnCredentials'),' ',parameters('migrationStorage'),' ',parameters('sourceEnv'),' ',variables('const_adminVMName'),' ',variables('const_managedVMPrefix'),' ',parameters('numberOfInstances'),' ',variables('const_scriptLocation'),' ',resourceGroup().name)]",
                 "primaryScriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('migrationScript'), parameters('_artifactsLocationSasToken')))]",
                 "supportingScriptsUris": [
                     "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('adminMigrationScript'), parameters('_artifactsLocationSasToken')))]"
@@ -481,13 +416,9 @@
         }
     ],
     "outputs": {
-        "hostname": {
+        "adminHostname": {
             "type": "string",
             "value": "[reference(concat(variables('const_adminVMName'),variables('name_publicIPAddress'))).dnsSettings.fqdn]"
-        },
-        "sshCommand": {
-            "type": "string",
-            "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(concat(variables('const_adminVMName'),variables('name_publicIPAddress'))).dnsSettings.fqdn)]"
         }
     }
 }
