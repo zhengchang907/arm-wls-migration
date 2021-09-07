@@ -12,8 +12,6 @@ export resourceGroupName="${9}"
 
 echo $@
 
-yum install jq -y
-
 export otnusername=$(echo $otnCredentials | jq -r '.otnAccountUsername')
 export otnusername=$(echo $otnCredentials | jq -r '.otnAccountPassword')
 export jdkVersion=$(echo $sourceEnv | jq -r '.javaEnv.jdkVersion')
