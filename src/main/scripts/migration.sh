@@ -1,16 +1,18 @@
 #!/bin/bash
 
-export acceptOTNLicenseAgreement="${1}"
-export otnCredentials="${2}"
-export migrationStorage="${3}"
-export sourceEnv="${4}"
-export adminVMName="${5}"
-export managedVMPrefix="${6}"
-export numberOfInstances="${7}"
-export scriptLocation="${8}",
-export resourceGroupName="${9}"
+export acceptOTNLicenseAgreement=$1
+export otnCredentials=$2
+export migrationStorage=$3
+export sourceEnv=$4
+export adminVMName=$5
+export managedVMPrefix=$6
+export numberOfInstances=$7
+export scriptLocation=$8
+export resourceGroupName=$9
 
 echo $@
+
+echo $acceptOTNLicenseAgreement $otnCredentials $migrationStorage $sourceEnv $adminVMName $managedVMPrefix $numberOfInstances $scriptLocation $resourceGroupName
 
 export otnusername=$(echo $otnCredentials | jq -r '.otnAccountUsername')
 export otnusername=$(echo $otnCredentials | jq -r '.otnAccountPassword')
@@ -41,8 +43,8 @@ function createInputFile() {
     ## Concat managed node
     for ((i=0;i<numberOfInstances-1;i++))
     do
-        srcHostname=$(echo "$sourceEnv" | jq ".managedNodeInfo" | jq -r ".[$i] | .hostname")
-        targetHostname=$(echo "$managedNode" | jq -r ".[$i]")
+        srcHostname=$(echo $sourceEnv | jq ".managedNodeInfo" | jq -r ".[$i] | .hostname")
+        targetHostname=$(echo $managedNodeHostnames | jq -r ".[$i]")
         input_file="$input_file"$'\n'"${srcHostname}=${targetHostname}"
     done
 }
