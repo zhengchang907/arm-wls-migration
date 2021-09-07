@@ -18,13 +18,15 @@ export DOMAIN_ADMIN_PASSWORD="${14}"
 export SOURCE_HOST_NAME="${15}"
 export TARGET_HOST_NAME="${16}"
 export INPUT_FILE="${17}"
+export wlsManagedPort=8001
 export wlsAdminPort=7001
-export wlsSSLAdminPort=7002
-export wlsAdminT3ChannelPort=7005
+export nmPort=5556
 export wlsAdminURL="$TARGET_HOST_NAME:$wlsAdminPort"
 export CHECK_URL="http://$wlsAdminURL/weblogic/ready"
 export startWebLogicScript="${DOMAIN_HOME}/startWebLogic.sh"
 export stopWebLogicScript="${DOMAIN_HOME}/bin/customStopWebLogic.sh"
+export DOMAIN_PATH=$(dirname "${DOMAIN_HOME}")
+export adminWlstURL="t3://$wlsAdminURL"
 
 function echo_stderr() {
     echo "$@" >&2
@@ -285,6 +287,8 @@ function runChangeHostCmd() {
         -domainAdminUserName ${DOMAIN_ADMIN_USERNAME} \
         -walletDir ${TMP_FILE_DIR} \
         -logDir ${TMP_FILE_DIR}
+        -adminURL ${adminWlstURL}
+        -managed
 }
 
 function updateNetworkRules() {
@@ -294,56 +298,9 @@ function updateNetworkRules() {
     fi
 
     # for Oracle Linux 7.6, open weblogic ports
-    echo "update network rules for admin server"
-    sudo firewall-cmd --zone=public --add-port=$wlsAdminPort/tcp
-    sudo firewall-cmd --zone=public --add-port=$wlsSSLAdminPort/tcp
-    sudo firewall-cmd --zone=public --add-port=$wlsAdminT3ChannelPort/tcp
-    sudo firewall-cmd --runtime-to-permanent
-    sudo systemctl restart firewalld
-}
-
-# Create adminserver as service
-function create_adminserver_service() {
-    echo "Creating weblogic admin server service"
-    cat <<EOF >/etc/systemd/system/wls_admin.service
-[Unit]
-Description=WebLogic Adminserver service
-After=network-online.target
-Wants=network-online.target
- 
-[Service]
-Type=simple
-WorkingDirectory="$DOMAIN_HOME"
-ExecStart="${startWebLogicScript}"
-ExecStop="${stopWebLogicScript}"
-User=oracle
-Group=oracle
-KillMode=process
-LimitNOFILE=65535
-Restart=always
-RestartSec=3
- 
-[Install]
-WantedBy=multi-user.target
-EOF
-    echo "Completed weblogic admin server service"
-}
-
-function admin_boot_setup() {
-    echo "Creating admin server boot properties"
-    #Create the boot.properties directory
-    mkdir -p "$DOMAIN_HOME/servers/admin/security"
-    echo "username=$DOMAIN_ADMIN_USERNAME" >"$DOMAIN_HOME/servers/admin/security/boot.properties"
-    echo "password=$DOMAIN_ADMIN_PASSWORD" >>"$DOMAIN_HOME/servers/admin/security/boot.properties"
-    sudo chown -R $username:$groupname $DOMAIN_HOME
-    echo "Completed admin server boot properties"
-}
-
-function enableAndStartAdminServerService() {
-    echo "Starting weblogic admin server as service"
-    sudo systemctl enable wls_admin
-    sudo systemctl daemon-reload
-    sudo systemctl start wls_admin
+    echo "update network rules for managed server"
+    sudo firewall-cmd --zone=public --add-port=$wlsManagedPort/tcp
+    sudo firewall-cmd --zone=public --add-port=$nmPort/tcp
 }
 
 function wait_for_admin() {
@@ -396,37 +353,42 @@ WantedBy=multi-user.target
 EOF
 }
 
-function enabledAndStartNodeManagerService()
-{
-  sudo systemctl enable wls_nodemanager
-  sudo systemctl daemon-reload
-  attempt=1
-  while [[ $attempt -lt 6 ]]
-  do
-     echo "Starting nodemanager service attempt $attempt"
-     sudo systemctl start wls_nodemanager
-     sleep 1m
-     attempt=`expr $attempt + 1`
-     sudo systemctl status wls_nodemanager | grep running
-     if [[ $? == 0 ]];
-     then
-         echo "wls_nodemanager service started successfully"
-	 break
-     fi
-     sleep 3m
- done
+function enabledAndStartNodeManagerService() {
+    sudo systemctl enable wls_nodemanager
+    sudo systemctl daemon-reload
+    attempt=1
+    while [[ $attempt -lt 6 ]]; do
+        echo "Starting nodemanager service attempt $attempt"
+        sudo systemctl start wls_nodemanager
+        sleep 1m
+        attempt=$(expr $attempt + 1)
+        sudo systemctl status wls_nodemanager | grep running
+        if [[ $? == 0 ]]; then
+            echo "wls_nodemanager service started successfully"
+            break
+        fi
+        sleep 3m
+    done
 }
 
-function createStopWebLogicScript()
-{
-cat <<EOF >${stopWebLogicScript}
-#!/bin/sh
-# This is custom script for stopping weblogic server using ADMIN_URL supplied
-export ADMIN_URL="t3://${wlsAdminURL}"
-$DOMAIN_HOME/bin/stopWebLogic.sh
+#This function to start managed server
+function start_managed() {
+    echo "Starting managed server $TARGET_HOST_NAME"
+    cat <<EOF >$DOMAIN_PATH/start-server.py
+connect('$DOMAIN_ADMIN_USERNAME','$DOMAIN_ADMIN_PASSWORD','$adminWlstURL')
+try:
+   start('$TARGET_HOST_NAME', 'Server')
+except:
+   print "Failed starting managed server $TARGET_HOST_NAME"
+   dumpStack()
+disconnect()
 EOF
-sudo chown -R $username:$groupname ${stopWebLogicScript}
-sudo chmod -R 750 ${stopWebLogicScript}
+    sudo chown -R $username:$groupname $DOMAIN_PATH
+    runuser -l oracle -c ". $ORACLE_HOME/oracle_common/common/bin/setWlstEnv.sh; java $WLST_ARGS weblogic.WLST $DOMAIN_PATH/start-server.py"
+    if [[ $? != 0 ]]; then
+        echo "Error : Failed in starting managed server $TARGET_HOST_NAME"
+        exit 1
+    fi
 }
 
 validateInputs
@@ -455,18 +417,12 @@ runChangeHostCmd
 
 updateNetworkRules
 
-createStopWebLogicScript
-
 create_nodemanager_service
-
-admin_boot_setup
-
-create_adminserver_service
 
 enabledAndStartNodeManagerService
 
-enableAndStartAdminServerService
-
 wait_for_admin
+
+start_managed
 
 echo "Weblogic Server Installation Completed succesfully."
