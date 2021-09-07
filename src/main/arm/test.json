@@ -2,6 +2,12 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "identity": {
+            "type": "object",
+            "metadata": {
+                "description": "User-assigned managed identity granted with contributor role of the same subscription"
+            }
+        },
       "name":{
         "type": "object",
         "defaultValue": {
@@ -21,12 +27,11 @@
         "apiVersion": "2019-10-01-preview",
         "name": "scriptInTemplate1",
         "location": "[resourceGroup().location]",
-        "kind": "AzurePowerShell",
+        "identity": "[parameters('identity')]",
+        "kind": "AzureCLI",
         "properties": {
-          "forceUpdateTag": "[parameters('utcValue')]",
-          "azPowerShellVersion": "5.0",
-          "timeout": "PT1H",
-          "arguments": "[concat('-name', ' ', parameters('name'))]",
+          "AzCliVersion": "2.15.0",
+          "arguments": "[concat(string(parameters('name')))]",
           "primaryScriptURI": "https://raw.githubusercontent.com/zhengchang907/arm-wls-migration/main/src/main/scripts/test.sh",
           "cleanupPreference": "OnSuccess",
           "retentionInterval": "P1D"
@@ -34,9 +39,5 @@
       }
     ],
     "outputs": {
-      "result": {
-        "value": "[reference('scriptInTemplate1').outputs.text]",
-        "type": "string"
-      }
     }
   }

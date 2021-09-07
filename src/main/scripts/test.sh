@@ -1,5 +1,5 @@
 #!/bin/bash
 
-export migrationStorage=$1
+export migrationStorage="$1"
 
 echo $migrationStorage
