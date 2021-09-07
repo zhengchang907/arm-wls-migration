@@ -111,6 +111,7 @@
         "virtualNetworkName": "olvmVNET",
         "migrationScript": "migration.sh",
         "adminMigrationScript": "adminMigration.sh",
+        "managedMigrationScript": "managedMigration.sh",
         "linuxOSVersion": "[parameters('linuxOSVersion')]",
         "const_portsToExpose": "22,80,443,7001-9000",
         "const_dnsLabelPrefix":"wls",
@@ -388,7 +389,8 @@
                 "arguments": "[concat(parameters('acceptOTNLicenseAgreement'),' ',string(parameters('otnCredentials')),' ',string(parameters('migrationStorage')),' ',string(parameters('sourceEnv')),' ',variables('const_adminVMName'),' ',variables('const_managedVMPrefix'),' ',parameters('numberOfInstances'),' ',variables('const_scriptLocation'),' ',resourceGroup().name)]",
                 "primaryScriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('migrationScript'), parameters('_artifactsLocationSasToken')))]",
                 "supportingScriptsUris": [
-                    "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('adminMigrationScript'), parameters('_artifactsLocationSasToken')))]"
+                    "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('adminMigrationScript'), parameters('_artifactsLocationSasToken')))]",
+                    "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('managedMigrationScript'), parameters('_artifactsLocationSasToken')))]"
                 ],
                 "cleanupPreference": "OnSuccess",
                 "retentionInterval": "P1D"

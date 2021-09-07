@@ -1,0 +1,42 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "name":{
+        "type": "object",
+        "defaultValue": {
+                "migrationSaName": "zhengtestsa",
+                "migrationConName": "zhengtestcon",
+                "migrationSASToken": "'sp=racwdl&st=2021-09-01T03:03:27Z&se=2021-09-10T11:03:27Z&sv=2020-08-04&sr=c&sig=%2BpHPnq6wZOeReuyEJcnf%2F5xOjs0LMObPj%2Bi1%2FweZDYo%3D'"
+            }
+      },
+      "utcValue": {
+        "type": "string",
+        "defaultValue": "[utcNow()]"
+      }
+    },
+    "resources": [
+      {
+        "type": "Microsoft.Resources/deploymentScripts",
+        "apiVersion": "2019-10-01-preview",
+        "name": "scriptInTemplate1",
+        "location": "[resourceGroup().location]",
+        "kind": "AzurePowerShell",
+        "properties": {
+          "forceUpdateTag": "[parameters('utcValue')]",
+          "azPowerShellVersion": "5.0",
+          "timeout": "PT1H",
+          "arguments": "[concat('-name', ' ', parameters('name'))]",
+          "primaryScriptURI": "https://raw.githubusercontent.com/zhengchang907/arm-wls-migration/main/src/main/scripts/test.sh",
+          "cleanupPreference": "OnSuccess",
+          "retentionInterval": "P1D"
+        }
+      }
+    ],
+    "outputs": {
+      "result": {
+        "value": "[reference('scriptInTemplate1').outputs.text]",
+        "type": "string"
+      }
+    }
+  }
