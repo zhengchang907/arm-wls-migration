@@ -22,8 +22,8 @@ export TARGET_BINARY_FILE_NAME=$(echo $sourceEnv | jq -r '.adminNodeInfo.ofmBina
 export TARGET_DOMAIN_FILE_NAME=$(echo $sourceEnv | jq -r '.adminNodeInfo.domainZipFileName')
 export ORACLE_HOME=$(echo $sourceEnv | jq -r '.ofmEnv.oracleHome')
 export DOMAIN_HOME=$(echo $sourceEnv | jq -r '.domainEnv.domainHome')
-export DOMAIN_ADMIN_USERNAME=$(echo $sourceEnv | jq -r '.domainEnv.adminUsername')
-export DOMAIN_ADMIN_PASSWORD=$(echo $sourceEnv | jq -r '.domainEnv.adminPassword')
+export DOMAIN_ADMIN_USERNAME=$(echo $sourceEnv | jq -r '.domainEnv.adminCredentials.adminUsername')
+export DOMAIN_ADMIN_PASSWORD=$(echo $sourceEnv | jq -r '.domainEnv.adminCredentials.adminPassword')
 export AZ_ACCOUNT_NAME=$(echo $migrationStorage | jq -r '.migrationSaName')
 export AZ_BLOB_CONTAINER=$(echo $migrationStorage | jq -r '.migrationConName')
 export AZ_SAS_TOKEN=$(echo $migrationStorage | jq -r '.migrationSASToken')
@@ -53,6 +53,8 @@ function createInputFile() {
 
 createInputFile
 
+echo "$input_file"
+
 az vm extension set --name CustomScript \
     --extension-instance-name admin-weblogic-setup-script \
     --resource-group ${resourceGroupName} \
@@ -63,6 +65,8 @@ az vm extension set --name CustomScript \
     --protected-settings "{\"commandToExecute\":\"sh adminMigration.sh  ${acceptOTNLicenseAgreement} ${otnusername} ${otnpassword} ${jdkVersion} ${JAVA_HOME} ${TARGET_BINARY_FILE_NAME} ${TARGET_DOMAIN_FILE_NAME} ${ORACLE_HOME} ${DOMAIN_HOME} ${AZ_ACCOUNT_NAME} ${AZ_BLOB_CONTAINER} ${AZ_SAS_TOKEN} ${DOMAIN_ADMIN_USERNAME} ${DOMAIN_ADMIN_PASSWORD} ${ADMIN_SOURCE_HOST_NAME} ${adminVMName} ${input_file}\"}"
 
 managedNodeHostnames=$(az vm list --resource-group ${resourceGroupName} --query "[?name!='${adminVMName}'].name")
+
+echo "$managedNodeHostnames"
 
 for ((i = 0; i < numberOfInstances - 1; i++)); do
     srcHostname=$(echo $sourceEnv | jq ".managedNodeInfo" | jq -r ".[$i] | .hostname")
