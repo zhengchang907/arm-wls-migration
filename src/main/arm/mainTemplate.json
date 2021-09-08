@@ -120,8 +120,8 @@
         "networkSecurityGroupRef": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
         "requiredPortrange": ",65200-65535,5556",
         "const_scriptLocation": "[uri(parameters('_artifactsLocation'), 'scripts/')]",
-        "const_adminVMName": "adminVM",
-        "const_managedVMPrefix": "mspVM",
+        "const_adminVMName": "targetAdminVM",
+        "const_managedVMPrefix": "targetMspVM",
         "name_publicIPAddress": "_PublicIP",
         "name_availabilitySet": "WLSCluster-AvailabilitySet"
     },

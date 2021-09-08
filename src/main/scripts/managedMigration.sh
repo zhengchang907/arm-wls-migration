@@ -15,13 +15,13 @@ export AZ_SAS_TOKEN="${12}"
 export TMP_FILE_DIR="/u01/tmp"
 export DOMAIN_ADMIN_USERNAME="${13}"
 export DOMAIN_ADMIN_PASSWORD="${14}"
-export SOURCE_HOST_NAME="${15}"
+export ADMIN_HOST_NAME="${15}"
 export TARGET_HOST_NAME="${16}"
 export INPUT_FILE="${17}"
 export wlsManagedPort=8001
 export wlsAdminPort=7001
 export nmPort=5556
-export wlsAdminURL="$TARGET_HOST_NAME:$wlsAdminPort"
+export wlsAdminURL="$ADMIN_HOST_NAME:$wlsAdminPort"
 export CHECK_URL="http://$wlsAdminURL/weblogic/ready"
 export startWebLogicScript="${DOMAIN_HOME}/startWebLogic.sh"
 export stopWebLogicScript="${DOMAIN_HOME}/bin/customStopWebLogic.sh"
@@ -263,17 +263,6 @@ function createInputFile() {
     echo "creating Install Location Template..."
 
     echo "${INPUT_FILE}" >${TMP_FILE_DIR}/input_file
-
-    #     cat <<EOF >$TMP_FILE_DIR/input_file.template
-    # [ARGUMENTS]
-
-    # [SERVER_HOST_MAPPING]
-    # #pattern source_host_name=target_host_name
-    # [source_host_name]=[target_host_name]
-    # EOF
-
-    #     sed 's@\[source_host_name\]@'"$SOURCE_HOST_NAME"'@' ${TMP_FILE_DIR}/input_file.template >${TMP_FILE_DIR}/input_file
-    #     sed -i 's@\[target_host_name\]@'"$TARGET_HOST_NAME"'@' ${TMP_FILE_DIR}/input_file
 }
 
 function crateWalletDirectory() {
