@@ -55,14 +55,15 @@ createInputFile
 
 echo "$input_file"
 
-az vm extension set --name CustomScript \
+az vm extension set --name AdminCustomScript \
     --extension-instance-name admin-weblogic-setup-script \
     --resource-group ${resourceGroupName} \
     --vm-name ${adminVMName} \
     --publisher Microsoft.Azure.Extensions \
     --version 2.0 \
     --settings "{\"fileUris\": [\"${scriptLocation}adminMigration.sh\"]}" \
-    --protected-settings "{\"commandToExecute\":\"sh adminMigration.sh  ${acceptOTNLicenseAgreement} ${otnusername} ${otnpassword} ${jdkVersion} ${JAVA_HOME} ${TARGET_BINARY_FILE_NAME} ${TARGET_DOMAIN_FILE_NAME} ${ORACLE_HOME} ${DOMAIN_HOME} ${AZ_ACCOUNT_NAME} ${AZ_BLOB_CONTAINER} ${AZ_SAS_TOKEN} ${DOMAIN_ADMIN_USERNAME} ${DOMAIN_ADMIN_PASSWORD} ${ADMIN_SOURCE_HOST_NAME} ${adminVMName} ${input_file}\"}"
+    --protected-settings "{\"commandToExecute\":\"bash adminMigration.sh  ${acceptOTNLicenseAgreement} ${otnusername} ${otnpassword} ${jdkVersion} ${JAVA_HOME} ${TARGET_BINARY_FILE_NAME} ${TARGET_DOMAIN_FILE_NAME} ${ORACLE_HOME} ${DOMAIN_HOME} ${AZ_ACCOUNT_NAME} ${AZ_BLOB_CONTAINER} ${AZ_SAS_TOKEN} ${DOMAIN_ADMIN_USERNAME} ${DOMAIN_ADMIN_PASSWORD} ${ADMIN_SOURCE_HOST_NAME} ${adminVMName} ${input_file}\"}"
+echo "admin VM extension execution completed"
 
 managedNodeHostnames=$(az vm list --resource-group ${resourceGroupName} --query "[?name!='${adminVMName}'].name")
 
@@ -71,12 +72,12 @@ echo "$managedNodeHostnames"
 for ((i = 0; i < numberOfInstances - 1; i++)); do
     srcHostname=$(echo $sourceEnv | jq ".managedNodeInfo" | jq -r ".[$i] | .hostname")
     targetHostname=$(echo $managedNodeHostnames | jq -r ".[$i]")
-    az vm extension set --name CustomScript \
-    --extension-instance-name admin-weblogic-setup-script \
+    az vm extension set --name ManagedCustomScript \
+    --extension-instance-name managed-weblogic-setup-script \
     --resource-group ${resourceGroupName} \
-    --vm-name ${adminVMName} \
+    --vm-name ${targetHostname} \
     --publisher Microsoft.Azure.Extensions \
     --version 2.0 \
     --settings "{\"fileUris\": [\"${scriptLocation}managedMigrate.sh\"]}" \
-    --protected-settings "{\"commandToExecute\":\"sh managedMigrate.sh  ${acceptOTNLicenseAgreement} ${otnusername} ${otnpassword} ${jdkVersion} ${JAVA_HOME} ${TARGET_BINARY_FILE_NAME} ${TARGET_DOMAIN_FILE_NAME} ${ORACLE_HOME} ${DOMAIN_HOME} ${AZ_ACCOUNT_NAME} ${AZ_BLOB_CONTAINER} ${AZ_SAS_TOKEN} ${DOMAIN_ADMIN_USERNAME} ${DOMAIN_ADMIN_PASSWORD} ${srcHostname} ${targetHostname} ${input_file}\"}"
+    --protected-settings "{\"commandToExecute\":\"bash managedMigrate.sh  ${acceptOTNLicenseAgreement} ${otnusername} ${otnpassword} ${jdkVersion} ${JAVA_HOME} ${TARGET_BINARY_FILE_NAME} ${TARGET_DOMAIN_FILE_NAME} ${ORACLE_HOME} ${DOMAIN_HOME} ${AZ_ACCOUNT_NAME} ${AZ_BLOB_CONTAINER} ${AZ_SAS_TOKEN} ${DOMAIN_ADMIN_USERNAME} ${DOMAIN_ADMIN_PASSWORD} ${srcHostname} ${targetHostname} ${input_file}\"}"
 done
