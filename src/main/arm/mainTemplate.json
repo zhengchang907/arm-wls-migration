@@ -386,7 +386,7 @@
             "identity": "[parameters('identity')]",
             "properties": {
                 "AzCliVersion": "2.15.0",
-                "arguments": "[concat(parameters('acceptOTNLicenseAgreement'),' ',string(parameters('otnCredentials')),' ',string(parameters('migrationStorage')),' ',string(parameters('sourceEnv')),' ',variables('const_adminVMName'),' ',variables('const_managedVMPrefix'),' ',parameters('numberOfInstances'),' ',variables('const_scriptLocation'),' ',resourceGroup().name)]",
+                "arguments": "[concat(parameters('acceptOTNLicenseAgreement'),' ',replace(string(parameters('otnCredentials')), '\"', '\\\"'),' ',replace(string(parameters('migrationStorage')), '\"', '\\\"'),' ',replace(string(parameters('sourceEnv')), '\"', '\\\"'),' ',variables('const_adminVMName'),' ',variables('const_managedVMPrefix'),' ',parameters('numberOfInstances'),' ',variables('const_scriptLocation'),' ',resourceGroup().name)]",
                 "primaryScriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('migrationScript'), parameters('_artifactsLocationSasToken')))]",
                 "supportingScriptsUris": [
                     "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('adminMigrationScript'), parameters('_artifactsLocationSasToken')))]",
