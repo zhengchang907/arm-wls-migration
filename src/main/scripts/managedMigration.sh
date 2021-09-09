@@ -383,6 +383,7 @@ EOF
 function configFileAuthority()
 {
     sudo chmod -R 755 $ORACLE_INSTALL_PATH
+    sudo chmod -R 755 $DOMAIN_HOME
 }
 
 validateInputs
