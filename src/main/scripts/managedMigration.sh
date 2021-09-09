@@ -277,8 +277,8 @@ function runChangeHostCmd() {
         -domainLoc ${DOMAIN_HOME} \
         -domainAdminUserName ${DOMAIN_ADMIN_USERNAME} \
         -walletDir ${TMP_FILE_DIR} \
-        -logDir ${TMP_FILE_DIR}
-        -adminURL ${adminWlstURL}
+        -logDir ${TMP_FILE_DIR} \
+        -adminURL ${adminWlstURL} \
         -managed
 }
 
@@ -383,8 +383,7 @@ EOF
     fi
 }
 
-function configFileAuthority()
-{
+function configFileAuthority() {
     sudo chmod -R 755 $ORACLE_INSTALL_PATH
     sudo chmod -R 755 $DOMAIN_HOME
 }
