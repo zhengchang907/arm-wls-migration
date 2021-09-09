@@ -271,7 +271,7 @@ function crateWalletDirectory() {
 }
 
 function runChangeHostCmd() {
-    export CHGHOST_JAVA_OPTIONS "-Dchghost.ignore.validation.port=true -Dchghost.temporary.port.range=7001-9000"
+    export CHGHOST_JAVA_OPTIONS="-Dchghost.ignore.validation.port=true -Dchghost.temporary.port.range=7001-9000"
     ${ORACLE_HOME}/oracle_common/bin/chghost.sh -chgHostInputFile ${TMP_FILE_DIR}/input_file \
         -javaHome ${JAVA_HOME} \
         -domainLoc ${DOMAIN_HOME} \
