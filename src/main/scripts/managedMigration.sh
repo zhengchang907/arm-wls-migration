@@ -20,8 +20,9 @@ export TARGET_HOST_NAME="${16}"
 export INPUT_FILE="${17}"
 export wlsManagedPort=8001
 export wlsAdminPort=7001
+export wlsAdminT3ChannelPort=7005
 export nmPort=5556
-export wlsAdminURL="$ADMIN_HOST_NAME:$wlsAdminPort"
+export wlsAdminURL="$ADMIN_HOST_NAME:$wlsAdminT3ChannelPort"
 export CHECK_URL="http://$wlsAdminURL/weblogic/ready"
 export startWebLogicScript="${DOMAIN_HOME}/startWebLogic.sh"
 export stopWebLogicScript="${DOMAIN_HOME}/bin/customStopWebLogic.sh"
@@ -296,6 +297,7 @@ function wait_for_admin() {
     #wait for admin to start
     count=1
     export CHECK_URL="http://$wlsAdminURL/weblogic/ready"
+    echo $CHECK_URL
     adminStatus=$(curl --insecure -ILs $CHECK_URL | tac | grep -m1 HTTP/1.1 | awk {'print $2'})
     while [[ "$adminStatus" != "200" ]]; do
         echo "Waiting for admin server to start"
