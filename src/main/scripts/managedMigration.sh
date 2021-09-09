@@ -380,6 +380,11 @@ EOF
     fi
 }
 
+function configFileAuthority()
+{
+    sudo chmod -R 755 $ORACLE_INSTALL_PATH
+}
+
 validateInputs
 
 addOracleGroupAndUser
@@ -407,6 +412,8 @@ runChangeHostCmd
 updateNetworkRules
 
 create_nodemanager_service
+
+configFileAuthority
 
 enabledAndStartNodeManagerService
 

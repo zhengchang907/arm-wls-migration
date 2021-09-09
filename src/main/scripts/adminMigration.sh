@@ -20,6 +20,8 @@ export INPUT_FILE="${16}"
 export wlsAdminPort=7001
 export wlsSSLAdminPort=7002
 export wlsAdminT3ChannelPort=7005
+export wlsManagedPort=8001
+export nmPort=5556
 export wlsAdminURL="$TARGET_HOST_NAME:$wlsAdminPort"
 export CHECK_URL="http://$wlsAdminURL/weblogic/ready"
 export startWebLogicScript="${DOMAIN_HOME}/startWebLogic.sh"
@@ -288,6 +290,8 @@ function updateNetworkRules() {
     sudo firewall-cmd --zone=public --add-port=$wlsAdminPort/tcp
     sudo firewall-cmd --zone=public --add-port=$wlsSSLAdminPort/tcp
     sudo firewall-cmd --zone=public --add-port=$wlsAdminT3ChannelPort/tcp
+    sudo firewall-cmd --zone=public --add-port=$wlsManagedPort/tcp
+    sudo firewall-cmd --zone=public --add-port=$nmPort/tcp
     sudo firewall-cmd --runtime-to-permanent
     sudo systemctl restart firewalld
 }
@@ -419,6 +423,11 @@ sudo chown -R $username:$groupname ${stopWebLogicScript}
 sudo chmod -R 750 ${stopWebLogicScript}
 }
 
+function configFileAuthority()
+{
+    sudo chmod -R 755 $ORACLE_INSTALL_PATH
+}
+
 validateInputs
 
 addOracleGroupAndUser
@@ -452,6 +461,8 @@ create_nodemanager_service
 admin_boot_setup
 
 create_adminserver_service
+
+configFileAuthority
 
 enabledAndStartNodeManagerService
 
