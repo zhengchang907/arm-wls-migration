@@ -22,7 +22,7 @@ export wlsSSLAdminPort=7002
 export wlsAdminT3ChannelPort=7005
 export wlsManagedPort=8001
 export nmPort=5556
-export wlsAdminURL="$TARGET_HOST_NAME:$wlsAdminPort"
+export wlsAdminURL="$TARGET_HOST_NAME:$wlsAdminT3ChannelPort"
 export CHECK_URL="http://$wlsAdminURL/weblogic/ready"
 export startWebLogicScript="${DOMAIN_HOME}/startWebLogic.sh"
 export stopWebLogicScript="${DOMAIN_HOME}/bin/customStopWebLogic.sh"
@@ -337,7 +337,21 @@ function enableAndStartAdminServerService() {
     echo "Starting weblogic admin server as service"
     sudo systemctl enable wls_admin
     sudo systemctl daemon-reload
-    sudo systemctl start wls_admin
+    attempt=1
+    while [[ $attempt -lt 6 ]]
+    do
+        echo "Starting admin service attempt $attempt"
+        sudo systemctl start wls_admin
+        sleep 1m
+        attempt=`expr $attempt + 1`
+        sudo systemctl status wls_admin | grep running
+        if [[ $? == 0 ]];
+        then
+            echo "wls_admin service started successfully"
+        break
+        fi
+        sleep 3m
+    done
 }
 
 function wait_for_admin() {

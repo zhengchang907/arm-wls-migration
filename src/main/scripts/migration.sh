@@ -79,8 +79,8 @@ function configureManagedNode() {
             --vm-name ${targetHostname} \
             --publisher Microsoft.Azure.Extensions \
             --version 2.0 \
-            --settings "{\"fileUris\": [\"${scriptLocation}managedMigrate.sh\"]}" \
-            --protected-settings "{\"commandToExecute\":\"bash managedMigrate.sh  ${acceptOTNLicenseAgreement} ${otnusername} ${otnpassword} ${jdkVersion} ${JAVA_HOME} ${TARGET_BINARY_FILE_NAME} ${TARGET_DOMAIN_FILE_NAME} ${ORACLE_HOME} ${DOMAIN_HOME} ${AZ_ACCOUNT_NAME} ${AZ_BLOB_CONTAINER} ${AZ_SAS_TOKEN} ${DOMAIN_ADMIN_USERNAME} ${DOMAIN_ADMIN_PASSWORD} ${adminVMName} ${targetHostname} ${input_file}\"}"
+            --settings "{\"fileUris\": [\"${scriptLocation}managedMigration.sh\"]}" \
+            --protected-settings "{\"commandToExecute\":\"bash managedMigration.sh  ${acceptOTNLicenseAgreement} ${otnusername} ${otnpassword} ${jdkVersion} ${JAVA_HOME} ${TARGET_BINARY_FILE_NAME} ${TARGET_DOMAIN_FILE_NAME} ${ORACLE_HOME} ${DOMAIN_HOME} ${AZ_ACCOUNT_NAME} ${AZ_BLOB_CONTAINER} ${AZ_SAS_TOKEN} ${DOMAIN_ADMIN_USERNAME} ${DOMAIN_ADMIN_PASSWORD} ${adminVMName} ${targetHostname} ${input_file}\"}"
     done
 }
 
