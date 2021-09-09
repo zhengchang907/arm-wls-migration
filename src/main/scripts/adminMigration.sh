@@ -337,21 +337,7 @@ function enableAndStartAdminServerService() {
     echo "Starting weblogic admin server as service"
     sudo systemctl enable wls_admin
     sudo systemctl daemon-reload
-    attempt=1
-    while [[ $attempt -lt 6 ]]
-    do
-        echo "Starting admin service attempt $attempt"
-        sudo systemctl start wls_admin
-        sleep 1m
-        attempt=`expr $attempt + 1`
-        sudo systemctl status wls_admin | grep running
-        if [[ $? == 0 ]];
-        then
-            echo "wls_admin service started successfully"
-        break
-        fi
-        sleep 3m
-    done
+    sudo systemctl start wls_admin
 }
 
 function wait_for_admin() {
