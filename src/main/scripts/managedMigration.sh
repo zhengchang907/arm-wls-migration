@@ -369,18 +369,21 @@ function start_managed() {
     cat <<EOF >$DOMAIN_PATH/start-server.py
 connect('$DOMAIN_ADMIN_USERNAME','$DOMAIN_ADMIN_PASSWORD','$adminWlstURL')
 try:
-   start('$TARGET_HOST_NAME', 'Server')
+   servers = cmo.getServers()
+   for server in servers:
+      if server.getListenAddress() == '$TARGET_HOST_NAME' :
+         start(server.getName(), 'Server')
 except:
    print "Failed starting managed server $TARGET_HOST_NAME"
    dumpStack()
 disconnect()
 EOF
     sudo chown -R $username:$groupname $DOMAIN_PATH
-    runuser -l oracle -c ". $ORACLE_HOME/oracle_common/common/bin/setWlstEnv.sh; java $WLST_ARGS weblogic.WLST $DOMAIN_PATH/start-server.py"
-    if [[ $? != 0 ]]; then
-        echo "Error : Failed in starting managed server $TARGET_HOST_NAME"
-        exit 1
-    fi
+    # runuser -l oracle -c ". $ORACLE_HOME/oracle_common/common/bin/setWlstEnv.sh; java $WLST_ARGS weblogic.WLST $DOMAIN_PATH/start-server.py"
+    # if [[ $? != 0 ]]; then
+    #     echo "Error : Failed in starting managed server $TARGET_HOST_NAME"
+    #     exit 1
+    # fi
 }
 
 function configFileAuthority() {
