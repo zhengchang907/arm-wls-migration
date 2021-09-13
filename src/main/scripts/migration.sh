@@ -54,13 +54,15 @@ function createInputFile() {
 }
 
 function configureAdminNode() {
-    az vm extension set --verbose --name CustomScript \
+    az vm extension set --name CustomScript \
         --resource-group ${resourceGroupName} \
         --vm-name ${adminVMName} \
         --publisher Microsoft.Azure.Extensions \
         --version 2.0 \
         --settings "{\"fileUris\": [\"${scriptLocation}adminMigration.sh\"]}" \
         --protected-settings "{\"commandToExecute\":\"bash adminMigration.sh  ${acceptOTNLicenseAgreement} ${otnusername} ${otnpassword} ${jdkVersion} ${JAVA_HOME} ${TARGET_BINARY_FILE_NAME} ${TARGET_DOMAIN_FILE_NAME} ${ORACLE_HOME} ${DOMAIN_HOME} ${AZ_ACCOUNT_NAME} ${AZ_BLOB_CONTAINER} ${AZ_SAS_TOKEN} ${DOMAIN_ADMIN_USERNAME} ${DOMAIN_ADMIN_PASSWORD} ${adminVMName} \"${input_file}\"\"}"
+    # error exception
+    echo $?
     echo "admin VM extension execution completed"
 }
 
@@ -72,13 +74,14 @@ function configureManagedNode() {
     for ((i = 0; i < numberOfInstances - 1; i++)); do
         srcHostname=$(echo $sourceEnv | jq ".managedNodeInfo" | jq -r ".[$i] | .hostname")
         targetHostname=$(echo $managedNodeHostnames | jq -r ".[$i]")
-        az vm extension set --verbose --name CustomScript \
+        az vm extension set --name CustomScript \
             --resource-group ${resourceGroupName} \
             --vm-name ${targetHostname} \
             --publisher Microsoft.Azure.Extensions \
             --version 2.0 \
             --settings "{\"fileUris\": [\"${scriptLocation}managedMigration.sh\"]}" \
             --protected-settings "{\"commandToExecute\":\"bash managedMigration.sh  ${acceptOTNLicenseAgreement} ${otnusername} ${otnpassword} ${jdkVersion} ${JAVA_HOME} ${TARGET_BINARY_FILE_NAME} ${TARGET_DOMAIN_FILE_NAME} ${ORACLE_HOME} ${DOMAIN_HOME} ${AZ_ACCOUNT_NAME} ${AZ_BLOB_CONTAINER} ${AZ_SAS_TOKEN} ${DOMAIN_ADMIN_USERNAME} ${DOMAIN_ADMIN_PASSWORD} ${adminVMName} ${targetHostname} \"${input_file}\"\"}"
+        echo $?
         echo "$srcHostname configuration extension execution completed"
     done
 }
