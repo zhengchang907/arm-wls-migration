@@ -51,7 +51,7 @@ function createInputFile() {
     done
 
     echo "$input_file"
-
+    apk add --update coreutils
     input_file_base64=$(echo $input_file | base64 -w0)
 }
 
