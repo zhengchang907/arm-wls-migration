@@ -110,3 +110,5 @@ createInputFile
 configureAdminNode
 
 configureManagedNode
+
+exit 1
