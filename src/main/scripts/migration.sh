@@ -52,7 +52,7 @@ function createInputFile() {
 
     echo "$input_file"
 
-    input_file_base64=$(echo $input_file | base64 -w 0)
+    input_file_base64=$(echo $input_file | base64 -w0)
 }
 
 function configureAdminNode() {
