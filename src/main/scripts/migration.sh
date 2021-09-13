@@ -54,7 +54,7 @@ function createInputFile() {
 }
 
 function configureAdminNode() {
-    az vm extension set --name CustomScript \
+    az vm extension set --verbose --name CustomScript \
         --resource-group ${resourceGroupName} \
         --vm-name ${adminVMName} \
         --publisher Microsoft.Azure.Extensions \
@@ -72,7 +72,7 @@ function configureManagedNode() {
     for ((i = 0; i < numberOfInstances - 1; i++)); do
         srcHostname=$(echo $sourceEnv | jq ".managedNodeInfo" | jq -r ".[$i] | .hostname")
         targetHostname=$(echo $managedNodeHostnames | jq -r ".[$i]")
-        az vm extension set --name CustomScript \
+        az vm extension set --verbose --name CustomScript \
             --resource-group ${resourceGroupName} \
             --vm-name ${targetHostname} \
             --publisher Microsoft.Azure.Extensions \
@@ -91,7 +91,7 @@ function startManagedNode() {
     for ((i = 0; i < numberOfInstances - 1; i++)); do
         srcHostname=$(echo $sourceEnv | jq ".managedNodeInfo" | jq -r ".[$i] | .hostname")
         targetHostname=$(echo $managedNodeHostnames | jq -r ".[$i]")
-        az vm extension set --name CustomScript \
+        az vm extension set --verbose --name CustomScript \
             --resource-group ${resourceGroupName} \
             --vm-name ${targetHostname} \
             --publisher Microsoft.Azure.Extensions \
