@@ -17,7 +17,8 @@ export DOMAIN_ADMIN_USERNAME="${13}"
 export DOMAIN_ADMIN_PASSWORD="${14}"
 export ADMIN_HOST_NAME="${15}"
 export TARGET_HOST_NAME="${16}"
-export INPUT_FILE="${17}"
+export INPUT_FILE_BASE64="${17}"
+export INPUT_FILE==$(echo $input_file_base64 | base64 --decode)
 export wlsManagedPort=8001
 export wlsAdminPort=7001
 export wlsAdminT3ChannelPort=7005
@@ -263,7 +264,8 @@ function setupOracleBinaryAndDomain() {
 function createInputFile() {
     echo "creating Install Location Template..."
 
-    echo "${INPUT_FILE}" >${TMP_FILE_DIR}/input_file
+    echo "${INPUT_FILE}" > ${TMP_FILE_DIR}/input_file
+    sed -i 's/ /\n/g' input_file
 }
 
 function crateWalletDirectory() {
