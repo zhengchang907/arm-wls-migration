@@ -363,8 +363,8 @@ function enabledAndStartNodeManagerService() {
     done
 }
 
-#This function to start managed server
-function start_managed() {
+#This function to config start managed server
+function config_start_managed() {
     echo "Starting managed server $TARGET_HOST_NAME"
     cat <<EOF >$DOMAIN_PATH/start-server.py
 connect('$DOMAIN_ADMIN_USERNAME','$DOMAIN_ADMIN_PASSWORD','$adminWlstURL')
@@ -379,11 +379,6 @@ except:
 disconnect()
 EOF
     sudo chown -R $username:$groupname $DOMAIN_PATH
-    # runuser -l oracle -c ". $ORACLE_HOME/oracle_common/common/bin/setWlstEnv.sh; java $WLST_ARGS weblogic.WLST $DOMAIN_PATH/start-server.py"
-    # if [[ $? != 0 ]]; then
-    #     echo "Error : Failed in starting managed server $TARGET_HOST_NAME"
-    #     exit 1
-    # fi
 }
 
 function configFileAuthority() {
@@ -425,6 +420,6 @@ enabledAndStartNodeManagerService
 
 wait_for_admin
 
-start_managed
+config_start_managed
 
 echo "Weblogic Server Installation Completed succesfully."

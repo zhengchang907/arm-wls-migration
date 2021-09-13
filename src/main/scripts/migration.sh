@@ -84,6 +84,25 @@ function configureManagedNode() {
     done
 }
 
+function startManagedNode() {
+    managedNodeHostnames=$(az vm list --resource-group ${resourceGroupName} --query "[?name!='${adminVMName}'].name")
+
+    echo "$managedNodeHostnames"
+
+    for ((i = 0; i < numberOfInstances - 1; i++)); do
+        srcHostname=$(echo $sourceEnv | jq ".managedNodeInfo" | jq -r ".[$i] | .hostname")
+        targetHostname=$(echo $managedNodeHostnames | jq -r ".[$i]")
+        az vm extension set --name CustomScript \
+            --extension-instance-name managed-weblogic-setup-script \
+            --resource-group ${resourceGroupName} \
+            --vm-name ${targetHostname} \
+            --publisher Microsoft.Azure.Extensions \
+            --version 2.0 \
+            --settings "{\"fileUris\": [\"${scriptLocation}managedStart.sh\"]}" \
+            --protected-settings "{\"commandToExecute\":\"bash managedStart.sh  ${ORACLE_HOME} ${DOMAIN_HOME} ${targetHostname}\"}"
+    done
+}
+
 createInputFile
 
 configureAdminNode
