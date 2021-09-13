@@ -27,6 +27,7 @@ export DOMAIN_ADMIN_PASSWORD=$(echo $sourceEnv | jq -r '.domainEnv.adminCredenti
 export AZ_ACCOUNT_NAME=$(echo $migrationStorage | jq -r '.migrationSaName')
 export AZ_BLOB_CONTAINER=$(echo $migrationStorage | jq -r '.migrationConName')
 export AZ_SAS_TOKEN=$(echo $migrationStorage | jq -r '.migrationSASToken')
+export AZ_SAS_TOKEN_BASE64=$(echo $AZ_SAS_TOKEN | base64 -w0)
 export ADMIN_SOURCE_HOST_NAME=$(echo $sourceEnv | jq -r '.adminNodeInfo.hostname')
 
 echo $otnusername $otnpassword $jdkVersion $JAVA_HOME $TARGET_BINARY_FILE_NAME $TARGET_DOMAIN_FILE_NAME $ORACLE_HOME $DOMAIN_HOME $DOMAIN_ADMIN_USERNAME $DOMAIN_ADMIN_PASSWORD $AZ_ACCOUNT_NAME $AZ_BLOB_CONTAINER $AZ_SAS_TOKEN $ADMIN_SOURCE_HOST_NAME
@@ -62,7 +63,7 @@ function configureAdminNode() {
         --publisher Microsoft.Azure.Extensions \
         --version 2.0 \
         --settings "{\"fileUris\": [\"${scriptLocation}adminMigration.sh\"]}" \
-        --protected-settings "{\"commandToExecute\":\"bash adminMigration.sh  ${acceptOTNLicenseAgreement} ${otnusername} ${otnpassword} ${jdkVersion} ${JAVA_HOME} ${TARGET_BINARY_FILE_NAME} ${TARGET_DOMAIN_FILE_NAME} ${ORACLE_HOME} ${DOMAIN_HOME} ${AZ_ACCOUNT_NAME} ${AZ_BLOB_CONTAINER} ${AZ_SAS_TOKEN} ${DOMAIN_ADMIN_USERNAME} ${DOMAIN_ADMIN_PASSWORD} ${adminVMName} ${input_file_base64}\"}"
+        --protected-settings "{\"commandToExecute\":\"bash adminMigration.sh  ${acceptOTNLicenseAgreement} ${otnusername} ${otnpassword} ${jdkVersion} ${JAVA_HOME} ${TARGET_BINARY_FILE_NAME} ${TARGET_DOMAIN_FILE_NAME} ${ORACLE_HOME} ${DOMAIN_HOME} ${AZ_ACCOUNT_NAME} ${AZ_BLOB_CONTAINER} ${AZ_SAS_TOKEN_BASE64} ${DOMAIN_ADMIN_USERNAME} ${DOMAIN_ADMIN_PASSWORD} ${adminVMName} ${input_file_base64}\"}"
     # error exception
     echo $?
     echo "admin VM extension execution completed"
@@ -82,7 +83,7 @@ function configureManagedNode() {
             --publisher Microsoft.Azure.Extensions \
             --version 2.0 \
             --settings "{\"fileUris\": [\"${scriptLocation}managedMigration.sh\"]}" \
-            --protected-settings "{\"commandToExecute\":\"bash managedMigration.sh  ${acceptOTNLicenseAgreement} ${otnusername} ${otnpassword} ${jdkVersion} ${JAVA_HOME} ${TARGET_BINARY_FILE_NAME} ${TARGET_DOMAIN_FILE_NAME} ${ORACLE_HOME} ${DOMAIN_HOME} ${AZ_ACCOUNT_NAME} ${AZ_BLOB_CONTAINER} ${AZ_SAS_TOKEN} ${DOMAIN_ADMIN_USERNAME} ${DOMAIN_ADMIN_PASSWORD} ${adminVMName} ${targetHostname} ${input_file_base64}\"}"
+            --protected-settings "{\"commandToExecute\":\"bash managedMigration.sh  ${acceptOTNLicenseAgreement} ${otnusername} ${otnpassword} ${jdkVersion} ${JAVA_HOME} ${TARGET_BINARY_FILE_NAME} ${TARGET_DOMAIN_FILE_NAME} ${ORACLE_HOME} ${DOMAIN_HOME} ${AZ_ACCOUNT_NAME} ${AZ_BLOB_CONTAINER} ${AZ_SAS_TOKEN_BASE64} ${DOMAIN_ADMIN_USERNAME} ${DOMAIN_ADMIN_PASSWORD} ${adminVMName} ${targetHostname} ${input_file_base64}\"}"
         echo $?
         echo "$srcHostname configuration extension execution completed"
     done
