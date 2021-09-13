@@ -39,7 +39,7 @@ function echo_stderr() {
 
 function createInputFile() {
     ## Add admin node
-    input_file="$input_file"$'\n${ADMIN_SOURCE_HOST_NAME}=${adminVMName}'
+    input_file="$input_file"$'\n'${ADMIN_SOURCE_HOST_NAME}=${adminVMName}
     ## Get all host names of source managed node
     managedNodeHostnames=$(az vm list --resource-group ${resourceGroupName} --query "[?name!='${adminVMName}'].name")
     echo $managedNodeHostnames
@@ -47,7 +47,7 @@ function createInputFile() {
     for ((i = 0; i < numberOfInstances - 1; i++)); do
         srcHostname=$(echo $sourceEnv | jq ".managedNodeInfo" | jq -r ".[$i] | .hostname")
         targetHostname=$(echo $managedNodeHostnames | jq -r ".[$i]")
-        input_file="$input_file"$'\n${srcHostname}=${targetHostname}'
+        input_file="$input_file"$'\n'${srcHostname}=${targetHostname}
     done
 
     echo "$input_file"
@@ -55,7 +55,6 @@ function createInputFile() {
 
 function configureAdminNode() {
     az vm extension set --name CustomScript \
-        --extension-instance-name admin-weblogic-setup-script \
         --resource-group ${resourceGroupName} \
         --vm-name ${adminVMName} \
         --publisher Microsoft.Azure.Extensions \
@@ -74,14 +73,13 @@ function configureManagedNode() {
         srcHostname=$(echo $sourceEnv | jq ".managedNodeInfo" | jq -r ".[$i] | .hostname")
         targetHostname=$(echo $managedNodeHostnames | jq -r ".[$i]")
         az vm extension set --name CustomScript \
-            --extension-instance-name managed-weblogic-setup-script \
             --resource-group ${resourceGroupName} \
             --vm-name ${targetHostname} \
             --publisher Microsoft.Azure.Extensions \
             --version 2.0 \
             --settings "{\"fileUris\": [\"${scriptLocation}managedMigration.sh\"]}" \
             --protected-settings "{\"commandToExecute\":\"bash managedMigration.sh  ${acceptOTNLicenseAgreement} ${otnusername} ${otnpassword} ${jdkVersion} ${JAVA_HOME} ${TARGET_BINARY_FILE_NAME} ${TARGET_DOMAIN_FILE_NAME} ${ORACLE_HOME} ${DOMAIN_HOME} ${AZ_ACCOUNT_NAME} ${AZ_BLOB_CONTAINER} ${AZ_SAS_TOKEN} ${DOMAIN_ADMIN_USERNAME} ${DOMAIN_ADMIN_PASSWORD} ${adminVMName} ${targetHostname} \"${input_file}\"\"}"
-        echo "$managedNodeHostnames extension execution completed"
+        echo "$srcHostname configuration extension execution completed"
     done
 }
 
@@ -94,13 +92,13 @@ function startManagedNode() {
         srcHostname=$(echo $sourceEnv | jq ".managedNodeInfo" | jq -r ".[$i] | .hostname")
         targetHostname=$(echo $managedNodeHostnames | jq -r ".[$i]")
         az vm extension set --name CustomScript \
-            --extension-instance-name managed-weblogic-setup-script \
             --resource-group ${resourceGroupName} \
             --vm-name ${targetHostname} \
             --publisher Microsoft.Azure.Extensions \
             --version 2.0 \
             --settings "{\"fileUris\": [\"${scriptLocation}managedStart.sh\"]}" \
             --protected-settings "{\"commandToExecute\":\"bash managedStart.sh  ${ORACLE_HOME} ${DOMAIN_HOME} ${targetHostname}\"}"
+        echo "$srcHostname start extension execution completed"
     done
 }
 
