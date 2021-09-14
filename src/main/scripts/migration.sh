@@ -105,7 +105,7 @@ function startManagedNode() {
     done
 }
 
-encodeParameter() {
+function encodeParameter() {
     apk add --update coreutils
     input_file_base64=$(echo $input_file | base64 -w0)
     az_sas_token_base64=$(echo $AZ_SAS_TOKEN | base64 -w0)
