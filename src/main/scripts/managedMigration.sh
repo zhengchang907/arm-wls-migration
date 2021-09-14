@@ -12,14 +12,14 @@ export DOMAIN_HOME="${9}"
 export AZ_ACCOUNT_NAME="${10}"
 export AZ_BLOB_CONTAINER="${11}"
 export AZ_SAS_TOKEN_BASE64="${12}"
-export AZ_SAS_TOKEN==$(echo $AZ_SAS_TOKEN_BASE64 | base64 --decode)
+export AZ_SAS_TOKEN=$(echo $AZ_SAS_TOKEN_BASE64 | base64 --decode)
 export TMP_FILE_DIR="/u01/tmp"
 export DOMAIN_ADMIN_USERNAME="${13}"
 export DOMAIN_ADMIN_PASSWORD="${14}"
 export ADMIN_HOST_NAME="${15}"
 export TARGET_HOST_NAME="${16}"
 export INPUT_FILE_BASE64="${17}"
-export INPUT_FILE==$(echo $input_file_base64 | base64 --decode)
+export INPUT_FILE=$(echo $input_file_base64 | base64 --decode)
 export wlsManagedPort=8001
 export wlsAdminPort=7001
 export wlsAdminT3ChannelPort=7005
