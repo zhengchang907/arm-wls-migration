@@ -71,7 +71,7 @@ function validateInputs() {
         exit 1
     fi
 
-    if [ -z "$AZ_SAS_TOKEN" ]; then
+    if [ -z "$AZ_SAS_TOKEN_BASE64" ]; then
         echo_stderr "AZ_SAS_TOKEN needs to be specified"
         exit 1
     fi
