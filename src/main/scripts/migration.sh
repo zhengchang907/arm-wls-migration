@@ -119,4 +119,6 @@ configureAdminNode
 
 configureManagedNode
 
+startManagedNode
+
 exit 1
