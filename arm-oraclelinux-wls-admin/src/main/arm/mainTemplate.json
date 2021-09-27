@@ -110,8 +110,7 @@
         "requiredPortrange": ",65200-65535,5556",
         "const_scriptLocation": "[uri(parameters('_artifactsLocation'), 'scripts/')]",
         "const_adminVMName": "targetAdminVM",
-        "name_publicIPAddress": "[concat(variables('const_adminVMName'),'_PublicIP')]",
-        "name_availabilitySet": "WLSCluster-AvailabilitySet"
+        "name_publicIPAddress": "[concat(variables('const_adminVMName'),'_PublicIP')]"
     },
     "resources": [
         {
@@ -317,8 +316,7 @@
             "name": "deploymentscripttest",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/',variables('const_adminVMName'))]",
-                "virtualMachineLoop"
+                "[resourceId('Microsoft.Compute/virtualMachines/',variables('const_adminVMName'))]"
             ],
             "kind": "AzureCLI",
             "identity": "[parameters('identity')]",
@@ -351,7 +349,7 @@
     "outputs": {
         "adminHostname": {
             "type": "string",
-            "value": "[reference(concat(variables('const_adminVMName'),variables('name_publicIPAddress'))).dnsSettings.fqdn]"
+            "value": "[reference(variables('name_publicIPAddress')).dnsSettings.fqdn]"
         }
     }
 }
