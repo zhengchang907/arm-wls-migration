@@ -391,14 +391,14 @@ function create_config_frontend_host() {
     cat <<EOF >$DOMAIN_PATH/config-frontendhost.py
 connect('$DOMAIN_ADMIN_USERNAME','$DOMAIN_ADMIN_PASSWORD','$adminWlstURL')
 try:
+   edit()
+   startEdit()
    servers = cmo.getServers()
    adminServerName = servers[0].getName()
    cd('Servers')
    cd(adminServerName)
    cd('WebServer')
    cd(adminServerName)
-   edit()
-   startEdit()
    cmo.setFrontendHost('$TARGET_HOST_NAME')
    save()
    activate()
