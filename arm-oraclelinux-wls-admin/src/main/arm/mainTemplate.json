@@ -322,7 +322,7 @@
             "identity": "[parameters('identity')]",
             "properties": {
                 "AzCliVersion": "2.15.0",
-                "arguments": "[concat(parameters('acceptOTNLicenseAgreement'),' ',replace(string(parameters('otnCredentials')), '\"', '\\\"'),' ',replace(string(parameters('migrationStorage')), '\"', '\\\"'),' ',replace(string(parameters('sourceEnv')), '\"', '\\\"'),' ',variables('const_adminVMName'),' ',variables('const_scriptLocation'),' ',resourceGroup().name),' ',reference(variables('name_publicIPAddress')).dnsSettings.fqdn]",
+                "arguments": "[concat(parameters('acceptOTNLicenseAgreement'),' ',replace(string(parameters('otnCredentials')), '\"', '\\\"'),' ',replace(string(parameters('migrationStorage')), '\"', '\\\"'),' ',replace(string(parameters('sourceEnv')), '\"', '\\\"'),' ',variables('const_adminVMName'),' ',variables('const_scriptLocation'),' ',resourceGroup().name,' ',reference(variables('name_publicIPAddress')).dnsSettings.fqdn)]",
                 "primaryScriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('migrationScript'), parameters('_artifactsLocationSasToken')))]",
                 "cleanupPreference": "OnSuccess",
                 "retentionInterval": "P1D"

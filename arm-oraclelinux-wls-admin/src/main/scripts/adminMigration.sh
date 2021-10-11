@@ -399,7 +399,7 @@ try:
    cd(adminServerName)
    edit()
    startEdit()
-   cmo.setFrontendHost($TARGET_HOST_NAME)
+   cmo.setFrontendHost('$TARGET_HOST_NAME')
    save()
    activate()
 except:
