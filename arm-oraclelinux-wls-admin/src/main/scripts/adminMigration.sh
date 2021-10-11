@@ -9,6 +9,7 @@ export TARGET_BINARY_FILE_NAME="${6}"
 export TARGET_DOMAIN_FILE_NAME="${7}"
 export ORACLE_HOME="${8}"
 export DOMAIN_HOME="${9}"
+export DOMAIN_PATH=$(dirname "${DOMAIN_HOME}")
 export AZ_ACCOUNT_NAME="${10}"
 export AZ_BLOB_CONTAINER="${11}"
 export AZ_SAS_TOKEN_BASE64="${12}"
@@ -16,16 +17,18 @@ export AZ_SAS_TOKEN=$(echo $AZ_SAS_TOKEN_BASE64 | base64 --decode)
 export TMP_FILE_DIR="/u01/tmp"
 export DOMAIN_ADMIN_USERNAME="${13}"
 export DOMAIN_ADMIN_PASSWORD="${14}"
-export TARGET_HOST_NAME="${15}"
+export TARGET_VM_NAME="${15}"
 export INPUT_FILE_BASE64="${16}"
+export TARGET_HOST_NAME="${17}"
 export INPUT_FILE=$(echo $INPUT_FILE_BASE64 | base64 --decode)
 export wlsAdminPort=7001
 export wlsSSLAdminPort=7002
 export wlsAdminT3ChannelPort=7005
-export wlsAdminURL="$TARGET_HOST_NAME:$wlsAdminT3ChannelPort"
+export wlsAdminURL="$TARGET_VM_NAME:$wlsAdminT3ChannelPort"
 export CHECK_URL="http://$wlsAdminURL/weblogic/ready"
 export startWebLogicScript="${DOMAIN_HOME}/startWebLogic.sh"
 export stopWebLogicScript="${DOMAIN_HOME}/bin/customStopWebLogic.sh"
+export adminWlstURL="t3://$wlsAdminURL"
 
 echo $@
 
@@ -382,6 +385,49 @@ function configFileAuthority()
     sudo chmod -R 755 $DOMAIN_HOME
 }
 
+#This function to config frontend host of admin
+function create_config_frontend_host() {
+    echo "Create config frontend host of $TARGET_VM_NAME"
+    cat <<EOF >$DOMAIN_PATH/config-frontendhost.py
+connect('$DOMAIN_ADMIN_USERNAME','$DOMAIN_ADMIN_PASSWORD','$adminWlstURL')
+try:
+   servers = cmo.getServers()
+   adminServerName = servers[0].getName()
+   cd('Servers')
+   cd(adminServerName)
+   cd('WebServer')
+   cd(adminServerName)
+   edit()
+   startEdit()
+   cmo.setFrontendHost($TARGET_HOST_NAME)
+   save()
+   activate()
+except:
+   print "Failed starting managed server $TARGET_VM_NAME"
+   dumpStack()
+disconnect()
+EOF
+    sudo chown -R $username:$groupname $DOMAIN_PATH
+    echo "Finish create config frontend host of $TARGET_VM_NAME"
+}
+
+function config_frontend_host() {
+    echo "Starting managed server $TARGET_HOST_NAME"
+    sudo chown -R $username:$groupname $DOMAIN_PATH
+    runuser -l oracle -c ". $ORACLE_HOME/oracle_common/common/bin/setWlstEnv.sh; java weblogic.WLST $DOMAIN_PATH/config-frontendhost.py"
+    if [[ $? != 0 ]]; then
+        echo "Error : Failed in starting managed server $TARGET_HOST_NAME"
+        exit 1
+    fi
+}
+
+function restartAdminServerService()
+{
+     echo "Restart weblogic admin server service"
+     sudo systemctl stop wls_admin
+     sudo systemctl start wls_admin
+}
+
 validateInputs
 
 addOracleGroupAndUser
@@ -414,9 +460,17 @@ admin_boot_setup
 
 create_adminserver_service
 
+create_config_frontend_host
+
 configFileAuthority
 
 enableAndStartAdminServerService
+
+wait_for_admin
+
+config_frontend_host
+
+restartAdminServerService
 
 wait_for_admin
 

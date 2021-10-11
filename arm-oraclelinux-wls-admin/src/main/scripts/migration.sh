@@ -7,6 +7,7 @@ export sourceEnv=$4
 export adminVMName=$5
 export scriptLocation=$6
 export resourceGroupName=$7
+export targetHostname=$8
 
 echo $@
 
@@ -48,7 +49,7 @@ function configureAdminNode() {
         --publisher Microsoft.Azure.Extensions \
         --version 2.0 \
         --settings "{\"fileUris\": [\"${scriptLocation}adminMigration.sh\"]}" \
-        --protected-settings "{\"commandToExecute\":\"bash adminMigration.sh  ${acceptOTNLicenseAgreement} ${otnusername} ${otnpassword} ${jdkVersion} ${JAVA_HOME} ${ADMIN_TARGET_BINARY_FILE_NAME} ${ADMIN_TARGET_DOMAIN_FILE_NAME} ${ORACLE_HOME} ${DOMAIN_HOME} ${AZ_ACCOUNT_NAME} ${AZ_BLOB_CONTAINER} ${az_sas_token_base64} ${DOMAIN_ADMIN_USERNAME} ${DOMAIN_ADMIN_PASSWORD} ${adminVMName} ${input_file_base64}\"}"
+        --protected-settings "{\"commandToExecute\":\"bash adminMigration.sh  ${acceptOTNLicenseAgreement} ${otnusername} ${otnpassword} ${jdkVersion} ${JAVA_HOME} ${ADMIN_TARGET_BINARY_FILE_NAME} ${ADMIN_TARGET_DOMAIN_FILE_NAME} ${ORACLE_HOME} ${DOMAIN_HOME} ${AZ_ACCOUNT_NAME} ${AZ_BLOB_CONTAINER} ${az_sas_token_base64} ${DOMAIN_ADMIN_USERNAME} ${DOMAIN_ADMIN_PASSWORD} ${adminVMName} ${input_file_base64} ${targetHostname}\"}"
     # error exception
     echo $?
     echo "admin VM extension execution completed"
