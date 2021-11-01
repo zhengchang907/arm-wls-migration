@@ -1,0 +1,254 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            },
+            "defaultValue": "[deployment().properties.templateLink.uri]"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+            },
+            "defaultValue": ""
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "User name for the Virtual Machine."
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+            }
+        },
+        "migrationMode": {
+            "type": "string",
+            "defaultValue": "Cluster",
+            "metadata": {
+                "description": "Migration mode, SingleNode or Cluster"
+            }
+        },
+        "adminVmSizeSelect": {
+            "type": "string",
+            "defaultValue": "Standard_D2_v3",
+            "metadata": {
+                "description": "Select appropriate VM Size as per requirement (Standard_A1, Standard_A2, Standard_A3, Standard_A4) for admin node"
+            }
+        },
+        "managedVmSizeSelect": {
+            "type": "string",
+            "defaultValue": "Standard_D2_v3",
+            "metadata": {
+                "description": "Select appropriate VM Size as per requirement (Standard_A1, Standard_A2, Standard_A3, Standard_A4) for managed node"
+            }
+        },
+        "numberOfInstances": {
+            "type": "int",
+            "defaultValue": 2,
+            "minValue": 2,
+            "maxValue": 5,
+            "metadata": {
+                "description": "Number of VMs to deploy, limit 5 since this sample is using a single storage account"
+            }
+        },
+        "linuxOSVersion": {
+            "type": "string",
+            "defaultValue": "7.6",
+            "allowedValues": [
+                "7.4",
+                "7.6"
+            ],
+            "metadata": {
+                "description": "Select appropriate Oracle Linux version"
+            }
+        },
+        "identity": {
+            "type": "object",
+            "metadata": {
+                "description": "User-assigned managed identity granted with contributor role of the same subscription"
+            }
+        },
+        "acceptOTNLicenseAgreement": {
+            "type": "string",
+            "metadata": {
+                "description": "Do you agree to provide OTN credentials to accept OTN License Agreement? Enter Y or y to agree, else N or n"
+            }
+        },
+        "otnCredentials": {
+            "type": "object",
+            "metadata": {
+                "description": "Username and password for your Oracle Technology Network account"
+            }
+        },
+        "migrationStorage": {
+            "type": "object",
+            "metadata": {
+                "description": "source environment files"
+            }
+        },
+        "sourceEnv": {
+            "type": "object",
+            "metadata": {
+                "description": "source environment details"
+            }
+        }
+    },
+    "variables": {
+        "name_single_node_migration": "SingleNode",
+        "name_cluster_migration": "Cluster",
+        "name_single_node_template": "adminMainTemplate.json",
+        "name_cluster_template": "clusterMainTemplate.json"
+
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-10-01",
+            "name": "create-target-environment-and-lift-shift-start",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "[concat('create-target-environment-for-', parameters('migrationMode'))]",
+            "condition": "[equals(parameters('migrationMode'), variables('name_cluster_migration'))]",
+            "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+               "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/arm-oraclelinux-wls-cluster', variables('name_cluster_template')))]",
+               "contentVersion": "1.0.0.0"
+            },
+            "parameters": {
+               "_artifactsLocation": {
+                  "value": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/arm-oraclelinux-wls-cluster/src/main/')]"
+               },
+               "location": {
+                  "value": "[parameters('location')]"
+               },
+               "adminUsername": {
+                  "value": "[parameters('adminUsername')]"
+               },
+               "adminPassword": {
+                  "value": "[parameters('adminPassword')]"
+               },
+               "adminVmSizeSelect": {
+                  "value": "[parameters('adminVmSizeSelect')]"
+               },
+               "managedVmSizeSelect": {
+                  "value": "[parameters('managedVmSizeSelect')]"
+               },
+               "numberOfInstances": {
+                  "value": "[parameters('numberOfInstances')]"
+               },
+               "linuxOSVersion": {
+                  "value": "[parameters('linuxOSVersion')]"
+               },
+               "identity": {
+                  "value": "[parameters('identity')]"
+               },
+               "acceptOTNLicenseAgreement": {
+                   "value": "[parameters('acceptOTNLicenseAgreement')]"
+               },
+               "otnCredentials": {
+                   "value": "[parameters('otnCredentials')]"
+               },
+               "migrationStorage": {
+                   "value": "[parameters('migrationStorage')]"
+               },
+               "sourceEnv": {
+                   "value": "[parameters('sourceEnv')]"
+               }
+            }
+         }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "[concat('create-target-environment-for-', parameters('migrationMode'))]",
+            "condition": "[equals(parameters('migrationMode'), variables('name_single_node_migration'))]",
+            "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+               "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/arm-oraclelinux-wls-admin', variables('name_single_node_template')))]",
+               "contentVersion": "1.0.0.0"
+            },
+            "parameters": {
+               "_artifactsLocation": {
+                  "value": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/arm-oraclelinux-wls-admin/src/main/')]"
+               },
+               "location": {
+                  "value": "[parameters('location')]"
+               },
+               "adminUsername": {
+                  "value": "[parameters('adminUsername')]"
+               },
+               "adminPassword": {
+                  "value": "[parameters('adminPassword')]"
+               },
+               "vmSizeSelect": {
+                  "value": "[parameters('adminVmSizeSelect')]"
+               },
+               "linuxOSVersion": {
+                  "value": "[parameters('linuxOSVersion')]"
+               },
+               "identity": {
+                  "value": "[parameters('identity')]"
+               },
+               "acceptOTNLicenseAgreement": {
+                   "value": "[parameters('acceptOTNLicenseAgreement')]"
+               },
+               "otnCredentials": {
+                   "value": "[parameters('otnCredentials')]"
+               },
+               "migrationStorage": {
+                   "value": "[parameters('migrationStorage')]"
+               },
+               "sourceEnv": {
+                   "value": "[parameters('sourceEnv')]"
+               }
+            }
+         }
+        },
+        {
+            "apiVersion": "2019-10-01",
+            "name": "create-target-environment-and-lift-shift-end",
+            "type": "Microsoft.Resources/deployments",
+            "dependsOn": [
+                "deploymentscripttest"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {
+    }
+}

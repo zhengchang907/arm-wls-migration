@@ -39,11 +39,27 @@
                 "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
             }
         },
-        "vmSizeSelect": {
+        "adminVmSizeSelect": {
             "type": "string",
             "defaultValue": "Standard_D2_v3",
             "metadata": {
-                "description": "Select appropriate VM Size as per requirement (Standard_A1, Standard_A2, Standard_A3, Standard_A4)"
+                "description": "Select appropriate VM Size as per requirement (Standard_A1, Standard_A2, Standard_A3, Standard_A4) for admin node"
+            }
+        },
+        "managedVmSizeSelect": {
+            "type": "string",
+            "defaultValue": "Standard_D2_v3",
+            "metadata": {
+                "description": "Select appropriate VM Size as per requirement (Standard_A1, Standard_A2, Standard_A3, Standard_A4) for managed node"
+            }
+        },
+        "numberOfInstances": {
+            "type": "int",
+            "defaultValue": 2,
+            "minValue": 2,
+            "maxValue": 5,
+            "metadata": {
+                "description": "Number of VMs to deploy, limit 5 since this sample is using a single storage account"
             }
         },
         "linuxOSVersion": {
@@ -92,15 +108,17 @@
         "storageAccountName": "[concat(take(replace(parameters('guidValue'),'-',''),6),'olvm')]",
         "imagePublisher": "Oracle",
         "imageOffer": "Oracle-Linux",
-        "nicName": "[concat(variables('const_adminVMName'),'olvmNIC')]",
+        "nicName": "olvmNIC",
         "addressPrefix": "10.0.0.0/16",
         "subnetName": "Subnet",
         "subnetPrefix": "10.0.0.0/24",
         "storageAccountType": "Standard_LRS",
         "publicIPAddressType": "Dynamic",
-        "vmSize": "[parameters('vmSizeSelect')]",
         "virtualNetworkName": "olvmVNET",
         "migrationScript": "migration.sh",
+        "adminMigrationScript": "adminMigration.sh",
+        "managedMigrationScript": "managedMigration.sh",
+        "managedStartScript": "managedStart.sh",
         "linuxOSVersion": "[parameters('linuxOSVersion')]",
         "const_portsToExpose": "22,80,443,7001-9000",
         "const_dnsLabelPrefix":"wls",
@@ -110,7 +128,9 @@
         "requiredPortrange": ",65200-65535,5556",
         "const_scriptLocation": "[uri(parameters('_artifactsLocation'), 'scripts/')]",
         "const_adminVMName": "targetAdminVM",
-        "name_publicIPAddress": "[concat(variables('const_adminVMName'),'_PublicIP')]"
+        "const_managedVMPrefix": "targetMspVM",
+        "name_publicIPAddress": "_PublicIP",
+        "name_availabilitySet": "WLSCluster-AvailabilitySet"
     },
     "resources": [
         {
@@ -172,6 +192,21 @@
                             "direction": "Inbound",
                             "destinationPortRanges": [ "7005" ]
                         }
+                    },
+                    {
+                        "name": "WebLogicManagedChannelPortsDenied",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 230,
+                            "direction": "Inbound",
+                            "destinationPortRanges": [
+                                "8501"
+                            ],
+                            "sourceAddressPrefix": "Internet"
+                        }
                     }
                 ]
             }
@@ -195,14 +230,21 @@
         {
             "type": "Microsoft.Network/publicIPAddresses",
             "apiVersion": "2018-11-01",
-            "name": "[variables('name_publicIPAddress')]",
+            "name": "[if(equals(copyIndex(),0),concat(variables('const_adminVMName'),variables('name_publicIPAddress')),concat(variables('const_managedVMPrefix'), copyIndex(),variables('name_publicIPAddress')))]",
             "location": "[parameters('location')]",
+            "copy": {
+                "name": "publicIPLoop",
+                "count": "[parameters('numberOfInstances')]"
+            },
             "properties": {
                 "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
                 "dnsSettings": {
-                    "domainNameLabel": "[concat(toLower(variables('const_dnsLabelPrefix')),'-',take(replace(parameters('guidValue'),'-',''),10))]"
+                    "domainNameLabel": "[concat(toLower(variables('const_dnsLabelPrefix')),copyindex(),'-',take(replace(parameters('guidValue'),'-',''),10))]"
                 }
-            }
+            },
+            "dependsOn": [
+                "[variables('storageAccountName')]"
+            ]
         },
         {
             "type": "Microsoft.Network/virtualNetworks",
@@ -234,10 +276,14 @@
         {
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2018-11-01",
-            "name": "[variables('nicName')]",
+            "name": "[if(equals(copyIndex(),0),concat(variables('const_adminVMName'),variables('nicName')),concat(variables('const_managedVMPrefix'), copyIndex(),variables('nicName')))]",
             "location": "[parameters('location')]",
+            "copy": {
+                "name": "nicLoop",
+                "count": "[parameters('numberOfInstances')]"
+            },
             "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses/', variables('name_publicIPAddress'))]",
+                "publicIPLoop",
                 "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
             ],
             "properties": {
@@ -247,7 +293,7 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('name_publicIPAddress'))]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',if(equals(copyIndex(),0),concat(variables('const_adminVMName'),variables('name_publicIPAddress')),concat(variables('const_managedVMPrefix'), copyIndex(),variables('name_publicIPAddress'))))]"
                             },
                             "subnet": {
                                 "id": "[variables('subnetRef')]"
@@ -256,24 +302,48 @@
                     }
                 ],
                 "dnsSettings": {
-                    "internalDnsNameLabel": "[variables('const_adminVMName')]"
+                    "internalDnsNameLabel": "[if(equals(copyIndex(),0),variables('const_adminVMName'),concat(variables('const_managedVMPrefix'), copyIndex()))]"
                 }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/availabilitySets",
+            "apiVersion": "2020-06-01",
+            "location": "[parameters('location')]",
+            "name": "[variables('name_availabilitySet')]",
+            "properties": {
+                "platformFaultDomainCount": 2,
+                "platformUpdateDomainCount": 2
+            },
+            "dependsOn": [
+                "[variables('virtualNetworkName')]"
+            ],
+            "sku": {
+                "name": "Aligned"
             }
         },
         {
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2018-10-01",
-            "name": "[variables('const_adminVMName')]",
+            "name": "[if(equals(copyIndex(),0),variables('const_adminVMName'),concat(variables('const_managedVMPrefix'), copyIndex()))]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+                "nicLoop",
+                "[resourceId('Microsoft.Compute/availabilitySets/', variables('name_availabilitySet'))]"
             ],
+            "copy": {
+                "name": "virtualMachineLoop",
+                "count": "[parameters('numberOfInstances')]"
+            },
             "properties": {
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('name_availabilitySet'))]"
+                },
                 "hardwareProfile": {
-                    "vmSize": "[variables('vmSize')]"
+                    "vmSize": "[if(equals(copyIndex(),0), parameters('adminVmSizeSelect'), parameters('managedVmSizeSelect'))]"
                 },
                 "osProfile": {
-                    "computerName": "[variables('const_adminVMName')]",
+                    "computerName": "[if(equals(copyIndex(),0),variables('const_adminVMName'),concat(variables('const_managedVMPrefix'), copyIndex()))]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]"
                 },
@@ -298,7 +368,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',if(equals(copyIndex(),0),concat(variables('const_adminVMName'),variables('nicName')),concat(variables('const_managedVMPrefix'), copyIndex(),variables('nicName'))))]"
                         }
                     ]
                 },
@@ -316,14 +386,20 @@
             "name": "deploymentscripttest",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/',variables('const_adminVMName'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines/',variables('const_adminVMName'))]",
+                "virtualMachineLoop"
             ],
             "kind": "AzureCLI",
             "identity": "[parameters('identity')]",
             "properties": {
                 "AzCliVersion": "2.15.0",
-                "arguments": "[concat(parameters('acceptOTNLicenseAgreement'),' ',replace(string(parameters('otnCredentials')), '\"', '\\\"'),' ',replace(string(parameters('migrationStorage')), '\"', '\\\"'),' ',replace(string(parameters('sourceEnv')), '\"', '\\\"'),' ',variables('const_adminVMName'),' ',variables('const_scriptLocation'),' ',resourceGroup().name,' ',reference(variables('name_publicIPAddress')).dnsSettings.fqdn)]",
+                "arguments": "[concat(parameters('acceptOTNLicenseAgreement'),' ',replace(string(parameters('otnCredentials')), '\"', '\\\"'),' ',replace(string(parameters('migrationStorage')), '\"', '\\\"'),' ',replace(string(parameters('sourceEnv')), '\"', '\\\"'),' ',variables('const_adminVMName'),' ',variables('const_managedVMPrefix'),' ',parameters('numberOfInstances'),' ',variables('const_scriptLocation'),' ',resourceGroup().name)]",
                 "primaryScriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('migrationScript'), parameters('_artifactsLocationSasToken')))]",
+                "supportingScriptsUris": [
+                    "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('adminMigrationScript'), parameters('_artifactsLocationSasToken')))]",
+                    "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('managedMigrationScript'), parameters('_artifactsLocationSasToken')))]",
+                    "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('managedStartScript'), parameters('_artifactsLocationSasToken')))]"
+                ],
                 "cleanupPreference": "OnSuccess",
                 "retentionInterval": "P1D"
             }
@@ -349,7 +425,7 @@
     "outputs": {
         "adminHostname": {
             "type": "string",
-            "value": "[reference(variables('name_publicIPAddress')).dnsSettings.fqdn]"
+            "value": "[reference(concat(variables('const_adminVMName'),variables('name_publicIPAddress'))).dnsSettings.fqdn]"
         }
     }
 }

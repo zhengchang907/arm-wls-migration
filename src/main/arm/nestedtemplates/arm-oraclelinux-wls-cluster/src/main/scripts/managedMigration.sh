@@ -103,6 +103,7 @@ function addOracleGroupAndUser() {
     groupname="oracle"
     username="oracle"
     user_home_dir="/u01/oracle"
+    sudo mkdir -p $user_home_dir
     USER_GROUP=${groupname}
     sudo groupadd $groupname
     sudo useradd -d ${user_home_dir} -g $groupname $username
@@ -217,7 +218,7 @@ function setupJDK() {
         echo_stderr "Failed to set JAVA_HOME. Please check logs and re-run the setup"
         exit 1
     fi
-    echo "Setup JDK start"
+    echo "Setup JDK end"
 }
 
 function downloadMigrationData() {
@@ -326,7 +327,7 @@ function create_nodemanager_service() {
     echo "Creating NodeManager service"
     # Added waiting for network-online service and restart service
     cat <<EOF >/etc/systemd/system/wls_nodemanager.service
- [Unit]
+[Unit]
 Description=WebLogic nodemanager service
 After=network-online.target
 Wants=network-online.target
@@ -334,7 +335,7 @@ Wants=network-online.target
 Type=simple
 # Note that the following three parameters should be changed to the correct paths
 # on your own system
-WorkingDirectory="$DOMAIN_HOME"
+WorkingDirectory=$DOMAIN_HOME
 ExecStart="$DOMAIN_HOME/bin/startNodeManager.sh"
 ExecStop="$DOMAIN_HOME/bin/stopNodeManager.sh"
 User=oracle

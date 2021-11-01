@@ -1,0 +1,75 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "_artifactsLocation": {
+            "value": "https://raw.githubusercontent.com/zhengchang907/arm-wls-migration/main/arm-oraclelinux-wls-admin/src/main/"
+        },
+        "location": {
+            "value": "eastus"
+        },
+        "adminUsername": {
+            "value": "zchang"
+        },
+        "adminPassword": {
+            "value": "Secret123456"
+        },
+        "vmSizeSelect": {
+            "value": "Standard_D2s_v3"
+        },
+        "linuxOSVersion": {
+            "value": "7.6"
+        },
+        "identity":{
+            "value": {
+                "type": "userAssigned",
+                "userAssignedIdentities": {
+                    "/subscriptions/260524c9-7a4d-4483-8d85-de54f9c40ae8/resourceGroups/zheng0907u/providers/Microsoft.ManagedIdentity/userAssignedIdentities/zheng0907u": {}
+                }
+            }
+        },
+        "acceptOTNLicenseAgreement": {
+            "value": "Y"
+        },
+        "otnCredentials": {
+            "value": {
+                "otnAccountUsername": "zhengchang@microsoft.com",
+                "otnAccountPassword": "Cz211807"
+            }
+        },
+        "migrationStorage": {
+            "value": {
+                "migrationSaName": "zheng0927storageaccount",
+                "migrationConName": "zheng0927container",
+                "migrationSASToken": "sp=racwdl&st=2021-10-08T06:31:46Z&se=2021-10-30T14:31:46Z&sv=2020-08-04&sr=c&sig=wavGK1aX%2FoDOLGolWbIKuVr6L7bkMVh0zzGX9dlh0iA%3D"
+            }
+        },
+        "sourceEnv": {
+            "value": {
+                "javaEnv": {
+                    "jdkVersion": "11",
+                    "javaHome": "/u01/app/jdk/jdk-11.0.9"
+                },
+                "ofmEnv": {
+                    "weblogicVersion": "14",
+                    "oracleHome": "/u01/app/wls/install/oracle/middleware/oracle_home"
+                },
+                "domainEnv": {
+                    "adminCredentials": {
+                        "adminUsername": "weblogic",
+                        "adminPassword": "Secret123456"
+                    },
+                    "domainHome": "/u01/domains/adminDomain",
+                    "adminHostName": "adminVM"
+                },
+                "nodeInfo": [
+                    {
+                        "hostname": "adminVM",
+                        "ofmBinaryFileName": "adminVMBinary.jar",
+                        "domainZipFileName": "adminVMDomain.zip"
+                    }
+                ]
+            }
+        }
+    }
+  }
