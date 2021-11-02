@@ -25,7 +25,7 @@ export DOMAIN_ADMIN_PASSWORD=$(echo $sourceEnv | jq -r '.domainEnv.adminCredenti
 export AZ_ACCOUNT_NAME=$(echo $migrationStorage | jq -r '.migrationSaName')
 export AZ_BLOB_CONTAINER=$(echo $migrationStorage | jq -r '.migrationConName')
 export AZ_SAS_TOKEN=$(echo $migrationStorage | jq -r '.migrationSASToken')
-export ADMIN_SOURCE_HOST_NAME=$(echo $sourceEnv | jq -r '.domainEnv.hostname')
+export ADMIN_SOURCE_HOST_NAME=$(echo $sourceEnv | jq -r '.domainEnv.adminHostName')
 
 echo $otnusername $otnpassword $jdkVersion $JAVA_HOME $ORACLE_HOME $DOMAIN_HOME $DOMAIN_ADMIN_USERNAME $DOMAIN_ADMIN_PASSWORD $AZ_ACCOUNT_NAME $AZ_BLOB_CONTAINER $AZ_SAS_TOKEN $ADMIN_SOURCE_HOST_NAME
 
