@@ -77,6 +77,7 @@ function configureNodes() {
         if [ "$srcHostname" != "$ADMIN_SOURCE_HOST_NAME" ]; then
             MANAGED_TARGET_BINARY_FILE_NAME=$(echo $sourceEnv | jq ".nodeInfo" | jq -r ".[$i] | .ofmBinaryFileName")
             MANAGED_TARGET_DOMAIN_FILE_NAME=$(echo $sourceEnv | jq ".nodeInfo" | jq -r ".[$i] | .domainZipFileName")
+            targetHostname=$(echo $managedNodeHostnames | jq -r ".[$i]")
             az vm extension set --name CustomScript \
                 --resource-group ${resourceGroupName} \
                 --vm-name ${targetHostname} \
@@ -85,7 +86,7 @@ function configureNodes() {
                 --settings "{\"fileUris\": [\"${scriptLocation}managedMigration.sh\"]}" \
                 --protected-settings "{\"commandToExecute\":\"bash managedMigration.sh  ${acceptOTNLicenseAgreement} ${otnusername} ${otnpassword} ${jdkVersion} ${JAVA_HOME} ${MANAGED_TARGET_BINARY_FILE_NAME} ${MANAGED_TARGET_DOMAIN_FILE_NAME} ${ORACLE_HOME} ${DOMAIN_HOME} ${AZ_ACCOUNT_NAME} ${AZ_BLOB_CONTAINER} ${az_sas_token_base64} ${DOMAIN_ADMIN_USERNAME} ${DOMAIN_ADMIN_PASSWORD} ${adminVMName} ${targetHostname} ${input_file_base64}\"}"
             echo $?
-            echo "$srcHostname configuration extension execution completed"
+            echo "$targetHostname configuration extension execution completed"
         fi
     done
 }
