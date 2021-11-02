@@ -55,7 +55,7 @@ function configureNodes() {
     # configure admin first
     for ((i = 0; i < numberOfInstances; i++)); do
         srcHostname=$(echo $sourceEnv | jq ".nodeInfo" | jq -r ".[$i] | .hostname")
-        if [ "$srcHostname" = "$ADMIN_SOURCE_HOST_NAME" ]; then
+        if [ "$srcHostname" == "$ADMIN_SOURCE_HOST_NAME" ]; then
             ADMIN_TARGET_BINARY_FILE_NAME=$(echo $sourceEnv | jq ".nodeInfo" | jq -r ".[$i] | .ofmBinaryFileName")
             ADMIN_TARGET_DOMAIN_FILE_NAME=$(echo $sourceEnv | jq ".nodeInfo" | jq -r ".[$i] | .domainZipFileName")
             az vm extension set --name CustomScript \
@@ -133,7 +133,6 @@ function startManagedNode() {
     echo "$managedNodeHostnames"
 
     for ((i = 0; i < numberOfInstances - 1; i++)); do
-        srcHostname=$(echo $sourceEnv | jq ".managedNodeInfo" | jq -r ".[$i] | .hostname")
         targetHostname=$(echo $managedNodeHostnames | jq -r ".[$i]")
         az vm extension set --verbose --name CustomScript \
             --resource-group ${resourceGroupName} \
@@ -142,7 +141,7 @@ function startManagedNode() {
             --version 2.0 \
             --settings "{\"fileUris\": [\"${scriptLocation}managedStart.sh\"]}" \
             --protected-settings "{\"commandToExecute\":\"bash managedStart.sh  ${ORACLE_HOME} ${DOMAIN_HOME} ${targetHostname}\"}"
-        echo "$srcHostname start extension execution completed"
+        echo "$targetHostname start extension execution completed"
     done
 }
 
