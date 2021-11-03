@@ -71,6 +71,8 @@ function configureNodes() {
         fi
     done
 
+    managedNodeHostnames=$(az vm list --resource-group ${resourceGroupName} --query "[?name!='${adminVMName}'].name")
+    echo "$managedNodeHostnames"
     # configure managed node after
     for ((i = 0; i < numberOfInstances; i++)); do
         srcHostname=$(echo $sourceEnv | jq ".nodeInfo" | jq -r ".[$i] | .hostname")
