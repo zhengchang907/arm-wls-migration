@@ -59,7 +59,7 @@
         "numberOfInstances": {
             "type": "int",
             "defaultValue": 2,
-            "minValue": 2,
+            "minValue": 1,
             "maxValue": 5,
             "metadata": {
                 "description": "Number of VMs to deploy, limit 5 since this sample is using a single storage account"
@@ -111,8 +111,10 @@
         "name_single_node_migration": "SingleNode",
         "name_cluster_migration": "Cluster",
         "name_single_node_template": "adminMainTemplate.json",
-        "name_cluster_template": "clusterMainTemplate.json"
-
+        "name_cluster_template": "clusterMainTemplate.json",
+        "name_single_node_deployment": "create-target-environment-for-single-node",
+        "name_cluster_deployment": "create-target-environment-for-cluster",
+        "DeploymentTemplateRef": "[if(equals(parameters('migrationMode'), variables('name_cluster_migration')), variables('name_cluster_deployment'), variables('name_single_node_deployment'))]"
     },
     "resources": [
         {
@@ -132,12 +134,12 @@
         {
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2019-10-01",
-            "name": "[concat('create-target-environment-for-', parameters('migrationMode'))]",
+            "name": "[variables('name_cluster_deployment')]",
             "condition": "[equals(parameters('migrationMode'), variables('name_cluster_migration'))]",
             "properties": {
             "mode": "Incremental",
             "templateLink": {
-               "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/arm-oraclelinux-wls-cluster', variables('name_cluster_template')))]",
+               "uri": "[uri(parameters('_artifactsLocation'), concat('arm/nestedtemplates/arm-oraclelinux-wls-cluster/src/main/arm/', variables('name_cluster_template')))]",
                "contentVersion": "1.0.0.0"
             },
             "parameters": {
@@ -186,12 +188,12 @@
         {
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2019-10-01",
-            "name": "[concat('create-target-environment-for-', parameters('migrationMode'))]",
+            "name": "[variables('name_single_node_deployment')]",
             "condition": "[equals(parameters('migrationMode'), variables('name_single_node_migration'))]",
             "properties": {
             "mode": "Incremental",
             "templateLink": {
-               "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/arm-oraclelinux-wls-admin', variables('name_single_node_template')))]",
+               "uri": "[uri(parameters('_artifactsLocation'), concat('arm/nestedtemplates/arm-oraclelinux-wls-admin/src/main/arm/', variables('name_single_node_template')))]",
                "contentVersion": "1.0.0.0"
             },
             "parameters": {
@@ -236,7 +238,7 @@
             "name": "create-target-environment-and-lift-shift-end",
             "type": "Microsoft.Resources/deployments",
             "dependsOn": [
-                "deploymentscripttest"
+                "[variables('DeploymentTemplateRef')]"
             ],
             "properties": {
                 "mode": "Incremental",
