@@ -73,13 +73,16 @@ function configureNodes() {
 
     managedNodeHostnames=$(az vm list --resource-group ${resourceGroupName} --query "[?name!='${adminVMName}'].name")
     echo "$managedNodeHostnames"
+    # iterate over managed nodes
+    j=0
     # configure managed node after
     for ((i = 0; i < numberOfInstances; i++)); do
         srcHostname=$(echo $sourceEnv | jq ".nodeInfo" | jq -r ".[$i] | .hostname")
         if [ "$srcHostname" != "$ADMIN_SOURCE_HOST_NAME" ]; then
             MANAGED_TARGET_BINARY_FILE_NAME=$(echo $sourceEnv | jq ".nodeInfo" | jq -r ".[$i] | .ofmBinaryFileName")
             MANAGED_TARGET_DOMAIN_FILE_NAME=$(echo $sourceEnv | jq ".nodeInfo" | jq -r ".[$i] | .domainZipFileName")
-            targetHostname=$(echo $managedNodeHostnames | jq -r ".[$i]")
+            targetHostname=$(echo $managedNodeHostnames | jq -r ".[$j]")
+            j=$((j+1))
             az vm extension set --name CustomScript \
                 --resource-group ${resourceGroupName} \
                 --vm-name ${targetHostname} \
