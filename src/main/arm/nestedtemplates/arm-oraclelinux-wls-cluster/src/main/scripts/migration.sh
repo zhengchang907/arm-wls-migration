@@ -38,14 +38,15 @@ function echo_stderr() {
 function createInputFile() {
     ## Add admin node
     input_file="$input_file"$'\n'${ADMIN_SOURCE_HOST_NAME}=${adminVMName}
-    ## Get all host names of source managed node
-    managedNodeHostnames=$(az vm list --resource-group ${resourceGroupName} --query "[?name!='${adminVMName}'].name")
-    echo $managedNodeHostnames
     ## Concat managed node
-    for ((i = 0; i < numberOfInstances - 1; i++)); do
-        srcHostname=$(echo $sourceEnv | jq ".managedNodeInfo" | jq -r ".[$i] | .hostname")
-        targetHostname=$(echo $managedNodeHostnames | jq -r ".[$i]")
-        input_file="$input_file"$'\n'${srcHostname}=${targetHostname}
+    j=0
+    for ((i = 0; i < numberOfInstances; i++)); do
+        srcHostname=$(echo $sourceEnv | jq ".nodeInfo" | jq -r ".[$i] | .hostname")
+        if [ "$srcHostname" != "$ADMIN_SOURCE_HOST_NAME" ]; then
+            targetHostname=$(echo $managedNodeHostnames | jq -r ".[$j]")
+            input_file="$input_file"$'\n'${srcHostname}=${targetHostname}
+            j=$((j+1))
+        fi
     done
 
     echo "$input_file"
@@ -70,9 +71,7 @@ function configureNodes() {
             echo "admin VM extension execution completed"
         fi
     done
-
-    managedNodeHostnames=$(az vm list --resource-group ${resourceGroupName} --query "[?name!='${adminVMName}'].name")
-    echo "$managedNodeHostnames"
+    
     # iterate over managed nodes
     j=0
     # configure managed node after
@@ -156,6 +155,11 @@ function encodeParameter() {
     input_file_base64=$(echo $input_file | base64 -w0)
     az_sas_token_base64=$(echo $AZ_SAS_TOKEN | base64 -w0)
 }
+
+
+## Get all host names of source managed node
+managedNodeHostnames=$(az vm list --resource-group ${resourceGroupName} --query "[?name!='${adminVMName}'].name")
+echo $managedNodeHostnames
 
 createInputFile
 
